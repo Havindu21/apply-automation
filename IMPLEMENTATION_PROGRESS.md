@@ -2,9 +2,53 @@
 
 ## Status Summary
 
-* **Current Phase:** Phase 3 (Explainable Matching & Truthful CV Tailoring) — **COMPLETED**
-* **Next Phase:** Phase 4 (Application Review Queue & ATS PDF Generation)
-* **Overall Health:** 36/36 unit tests passing, production build passing, 0 ESLint errors/warnings.
+* **Current Phase:** Phase 4 & Phase 5 (Application Review Pipeline, ATS PDF Generation, Assisted Form Copilot, Analytics) — **COMPLETED**
+* **Overall Status:** Full Core System Operational (Phases 1, 2, 3, 4, 5 Complete)
+* **Overall Health:** 47/47 unit tests passing across 9 test suites, production build passing (18 routes), 0 ESLint errors/warnings.
+
+---
+
+## Completed Milestones in Phase 4 & Phase 5
+
+1. **ATS-Friendly PDF Document Generation:**
+   - Implemented `generateATSSemanticHTML` and `generateCoverLetterSemanticHTML` in `src/lib/documents/ats-template.ts` with clean single-column semantic typography, A4 page layout, standard ATS section headings, and selectable text.
+   - Built `PDFGenerator` service in `src/lib/documents/pdf-generator.ts` utilizing Playwright headless Chromium for high-fidelity vector PDF compilation.
+   - Added streaming PDF download route (`GET /api/applications/[id]/pdf`) supporting both tailored resumes and cover letters with sanitized file naming.
+   - Added live HTML inspection endpoint (`GET /api/applications/[id]/preview`).
+
+2. **Application State Machine & Strict Human Gatekeeper:**
+   - Implemented `ApplicationStateMachine` in `src/lib/applications/state-machine.ts` with strict legal state transitions: `discovered -> matched -> prepared -> review -> approved -> applying -> submitted -> confirmed -> responded -> interview -> offer / rejected / withdrawn`.
+   - **Enforced Human-Controlled Pipeline Rule:** System/AI actors are strictly blocked from approving applications; only a verified human action can move an application into `approved` state.
+   - Idempotency guard guaranteeing single active application per job URL/ID.
+   - Transition history tracking recording `{ from, to, actor, reason, evidence, timestamp }`.
+
+3. **Application Service & Review Pipeline API:**
+   - Built `ApplicationService` in `src/lib/services/application-service.ts` supporting Drizzle PostgreSQL persistence with local in-memory fallback.
+   - API endpoints:
+     - `GET /api/applications`: Lists applications with linked job details.
+     - `POST /api/applications`: Creates or updates application packages from Studio.
+     - `PATCH /api/applications/[id]/status`: Transitions state through the state machine.
+
+4. **Assisted Browser Form Copilot:**
+   - Built `FormCopilot` in `src/lib/copilot/form-filler.ts` supporting ATS platforms (Greenhouse, Lever, Ashby, and Generic).
+   - Prepares clean candidate form payload (First Name, Last Name, Email, Phone, Location, Portfolio, LinkedIn, GitHub, Headline, Summary, Skills).
+   - Playwright headed browser session (`POST /api/applications/[id]/assist`) auto-fills standard form inputs, uploads tailored PDF resume, and **strictly halts before final submission for human review and click**.
+   - Built Quick-Fill Clipboard Modal with one-click copy buttons for candidates applying in their personal everyday browser.
+
+5. **Application Tracker Web Interface:**
+   - Implemented `src/components/ApplicationTrackerTab.tsx` featuring:
+     - Kanban columns: Review Queue, Approved for Apply, Applying / Copilot, Submitted & Confirmed, Interviews & Offers.
+     - Direct ATS Resume download and in-browser preview.
+     - Human approval trigger button.
+     - "Confirm Applied" dialog requiring verification notes or confirmation evidence.
+     - Audit History Modal showing timestamped state progression and actor attribution.
+
+6. **Search & Conversion Analytics Dashboard:**
+   - Built `src/components/AnalyticsTab.tsx` featuring:
+     - Application pipeline conversion funnel (Discovered -> Prepared -> Human Approved -> Confirmed Applied -> Interviews/Offers).
+     - Interview conversion rate calculation.
+     - Zero-hallucination compliance statistics (100% verified facts grounding).
+     - Geographic filter yield (Worldwide / Sri Lanka remote roles count).
 
 ---
 
@@ -32,84 +76,30 @@
 4. **Application Studio UI:**
    - Visual explainable match meter (0–100) with strengths and honest gaps.
    - Side-by-side comparison between Base Canonical Facts and Tailored CV bullets with clickable citation badges.
-   - Integrated "Match in Studio" navigation directly from Job Explorer cards.
+   - Integrated "Place in Review Queue" action linking Studio directly into the Application Pipeline.
 
 ---
 
 ## Completed Milestones in Phase 2
 
 1. **Modular Job Source Adapters:**
-   - Remotive adapter fetching real developer postings with `candidate_required_location`.
-   - RemoteOK adapter handling API payloads, skipping legal header metadata.
-   - Jobicy adapter for remote tech postings with `jobGeo`.
-   - WeWorkRemotely RSS feed crawler for full-stack, frontend, and backend programming categories.
-   - Greenhouse and Lever ATS watchlist crawlers for target remote engineering companies.
-   - Manual job URL parser for pasting any job link (e.g. LinkedIn, company pages).
-
+   - Remotive, RemoteOK, Jobicy, WeWorkRemotely RSS, Greenhouse and Lever ATS watchlist crawlers, and Manual URL Ingestion.
 2. **Geographic Hiring Eligibility Engine:**
-   - Implemented `evaluateGeographicEligibility` with positive flags (Worldwide, Sri Lanka, APAC) and negative constraint flags (US Only, US Work Auth Required, W2 Only, No C2C, Canada Only, EU/UK Only).
-   - Automatically quarantines US-only or regionally restricted postings when `allowSriLankaRemoteOnly` is active.
-
+   - Evaluates worldwide and Sri Lanka remote suitability versus US/EU-only legal restrictions.
 3. **Normalization & Deduplication:**
-   - Stable URL hash ignoring tracking query parameters (`utm_*`, `ref`, etc.).
-   - Composite key `company::title::location` across common title variations (e.g. `sr.` vs `senior`, `swe` vs `software engineer`).
-
+   - URL parameter stripping, SHA256 hashes, and composite keys.
 4. **Job Explorer Dashboard:**
-   - Search bar across title, company, and description.
-   - Eligibility filter toggle ("Sri Lanka & Worldwide Eligible Only").
-   - Detailed job cards with eligibility reason pills, work mode, and salary indicators.
-   - "Inspect Job" modal with `<job_posting_untrusted>` warning banner.
-   - "Paste Job URL" dialog for manual job ingestion.
-   - Live discovery trigger with real-time feedback.
+   - Live search, filtering, eligibility pills, and inspect modal with untrusted content warnings.
 
 ---
 
 ## Completed Milestones in Phase 1
 
-1. **Stack Initialization:**
-   - Initialized Next.js 16 (React 19, TypeScript strict mode, Tailwind CSS v4, Lucide Icons).
-   - Configured Docker Compose defining `postgres` (PostgreSQL 16 Alpine), `web`, and `worker` services.
-   - Pinned `.env.example` and `.gitignore` ignoring sensitive data and generated PDFs.
-
-2. **Database & ORM Layer:**
-   - Built full Drizzle ORM schema (`src/db/schema.ts`) covering 14 tables: `profiles`, `skills`, `facts`, `experiences`, `experience_facts`, `projects`, `project_facts`, `educations`, `career_profiles`, `user_preferences`, `job_execution_logs`, `jobs`, `matches`, `applications`.
-   - Created database connection pool (`src/db/index.ts`) with warm reuse for Next.js development.
-   - Created database migration script (`src/db/migrate.ts`) and seed script (`src/db/seed.ts`).
-
-3. **Atomic Fact Ground Truth & Validation (Spec 001):**
-   - Implemented Zod schema with strict validations in `src/lib/validation/profile.ts`.
-   - Verified 8 acceptance criteria via Vitest:
-     - Valid profile passes.
-     - Invalid date format (non YYYY-MM) rejected.
-     - End date before start date rejected.
-     - Disabling all work modes rejected.
-     - Fact referencing an unknown skill rejected.
-     - Duplicate skill IDs in a fact rejected.
-     - Empty or >300 char fact text rejected.
-     - Experience with no facts rejected.
-
-4. **Havindu's CV Initial Extraction & Verification Portal:**
-   - Accurately extracted candidate data from `HHH Fonseka - Associate Software Engineer - 2026.pdf` into `src/lib/cv/initial-cv-data.ts`.
-   - Enforced initial unverified state (`isVerified: false`) on all facts.
-   - Created 5 distinct Career Profiles (Frontend, Full-Stack, Backend, Flutter, AI Application).
-   - Configured Sri Lanka geographic eligibility guard as default.
-
-5. **Web Interface:**
-   - **Navbar:** Sticky header with active tab indicator and dynamic unverified fact counter badge.
-   - **Overview Tab:** Summary metrics, unverified facts alert banner, career target status, manual discovery button.
-   - **CV Import Review Portal:** Detailed list of all extracted CV facts, verification status pills, "Verify Fact" toggles, and "Verify All" batch action.
-   - **My Profile & Fact Bank:** Contact info, skill categories, experience timeline, and associated atomic facts.
-   - **Career Profiles Tab:** Enable/disable toggles, priority badges, target job titles, and emphasized skills.
-   - **Preferences Tab:** Persistent work-mode toggles (Remote, Hybrid, Onsite), Sri Lanka geographic filter, salary and matching thresholds, and cron schedule configuration.
-   - **Automation Center:** History table for `pg-boss` executions with duration and error inspection.
-
-6. **Decoupled Worker Service:**
-   - Implemented `src/worker/index.ts` using `pg-boss` on PostgreSQL.
-   - Registered `job-discovery`, `job-matching`, and `health-check` queues.
-   - Dynamically syncs recurring schedules with `user_preferences.automation_cron`.
-   - Logs full execution history and error stacks to `job_execution_logs`.
-
-7. **Verification & Quality:**
-   - 17 of 17 Vitest tests passing.
-   - Zero ESLint errors or warnings.
-   - Next.js production build passing with all routes generated.
+1. **PostgreSQL Database & Drizzle ORM:**
+   - 14 database tables defining profiles, skills, atomic facts, experiences, projects, user preferences, jobs, matches, and application logs.
+2. **Atomic Profile Facts & Zero-Hallucination Grounding:**
+   - Seeded candidate profile with all imported facts set to `isVerified: false`.
+3. **Decoupled Worker Architecture:**
+   - `pg-boss` background processor running independently from Next.js web application.
+4. **Web UI Foundation:**
+   - Multi-tab application cockpit with CV verification portal and work-mode settings.

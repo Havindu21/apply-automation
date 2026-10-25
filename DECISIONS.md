@@ -52,3 +52,28 @@
 * **Rationale:**
   - Prevents candidate rejection at the payroll/visa stage.
   - Cuts AI scoring token costs by ~80% by discarding regionally ineligible jobs early.
+
+---
+
+## ADR-006: Playwright Headless Chromium for ATS-Compliant Vector PDF Generation
+* **Status:** Accepted
+* **Context:** Generating ATS-compliant PDFs requires single-column semantic layouts, selectable text, standard system fonts (Arial/Helvetica), accurate page margins (15mm), and zero canvas rasterization so ATS parsers can read every word accurately.
+* **Decision:** Implemented `PDFGenerator` with Playwright headless Chromium using `page.setContent()` and `page.pdf()`.
+* **Rationale:**
+  - HTML/CSS semantic template (`ats-template.ts`) enables pixel-perfect design control matching modern ATS parser best practices.
+  - Generates searchable, selectable vector text with standard font encodings (no flattened canvas images).
+  - High performance: Compiles a clean vector PDF in ~650ms.
+  - Dual support: Renders both Tailored Resumes and Cover Letters using shared candidate styling.
+
+---
+
+## ADR-007: Human-in-the-Loop State Machine with Dual-Mode Form Filling Copilot
+* **Status:** Accepted
+* **Context:** Users need flexibility when submitting applications: some prefer automated browser filling, while others prefer applying in their everyday personal browser with saved passwords and session cookies.
+* **Decision:** Implemented strict state transitions in `ApplicationStateMachine` requiring actor `'human'` for `approved` and `confirmed` states. Built dual copilot modes:
+  1. Headed Playwright session that navigates to the job URL, populates fields, attaches the tailored resume PDF, and pauses for human final click.
+  2. Quick-Fill Clipboard Drawer providing one-click copy buttons for candidate contact info, headlines, summaries, and skills for seamless manual filling.
+* **Rationale:**
+  - Guaranteed zero autonomous or unauthorized submissions.
+  - Complete versatility across complex employer portals, anti-bot mechanisms, and multi-factor auth flows.
+  - Clear audit trail capturing every state transition timestamp, actor, and proof of submission.

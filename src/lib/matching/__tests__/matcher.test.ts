@@ -1,10 +1,24 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { JobMatcher } from "../matcher";
+import { geminiClient } from "../../ai/gemini-client";
 import { initialImportedCVProfile } from "../../cv/initial-cv-data";
 import { NormalizedJob } from "../../discovery/types";
 
 describe("JobMatcher (Two-Tier Matching Engine)", () => {
   const profile = initialImportedCVProfile;
+
+  beforeEach(() => {
+    vi.spyOn(geminiClient, "generateStructured").mockImplementation(async () => {
+      return {
+        matchScore: 88,
+        eligible: true,
+        strengths: ["Strong React & Next.js skills", "Frontend performance optimization"],
+        gaps: ["No direct Docker production experience specified in requirements"],
+        seniorityFit: "Associate / Early Career (Ideal)",
+        explanation: "Excellent technical and architectural alignment with verified profile facts.",
+      };
+    });
+  });
 
   const sampleRemoteJob: NormalizedJob = {
     source: "remotive",

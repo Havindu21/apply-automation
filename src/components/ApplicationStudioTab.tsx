@@ -36,9 +36,62 @@ export function ApplicationStudioTab({ profile, initialJobId }: ApplicationStudi
   const [isTailoring, setIsTailoring] = useState(false);
   const [tailoredPackage, setTailoredPackage] = useState<TailoredApplicationPackage | null>(null);
   const [tailoringError, setTailoringError] = useState<string | null>(null);
+  const [isSavingToPipeline, setIsSavingToPipeline] = useState(false);
+  const [savedSuccessMessage, setSavedSuccessMessage] = useState<string | null>(null);
 
   // Active view: 'match' | 'cv' | 'cover-letter'
   const [viewMode, setViewMode] = useState<"match" | "cv" | "cover-letter">("match");
+
+  const handleSaveToPipeline = async () => {
+    if (!selectedJob || !tailoredPackage) return;
+    setIsSavingToPipeline(true);
+    setSavedSuccessMessage(null);
+
+    try {
+      const citedFactIds = [
+        ...tailoredPackage.tailoredCV.experiences.flatMap((e) => e.bullets.flatMap((b) => b.citedFactIds)),
+        ...tailoredPackage.tailoredCV.projects.flatMap((p) => p.bullets.flatMap((b) => b.citedFactIds)),
+      ];
+
+      const res = await fetch("/api/applications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jobId: selectedJob.urlHash,
+          tailoredCv: tailoredPackage.tailoredCV,
+          coverLetter: tailoredPackage.coverLetter,
+          citedFactIds,
+          method: "assisted_form",
+          job: {
+            id: selectedJob.urlHash,
+            source: selectedJob.source,
+            sourceId: selectedJob.sourceId,
+            url: selectedJob.url,
+            title: selectedJob.title,
+            company: selectedJob.company,
+            location: selectedJob.location,
+            workMode: selectedJob.workMode,
+            isWorldwideRemote: selectedJob.isWorldwideRemote,
+            allowedLocations: selectedJob.allowedLocations,
+            description: selectedJob.description,
+            salaryRaw: selectedJob.salaryRaw,
+          },
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setSavedSuccessMessage("Application package placed in Review Queue! Check the Application Tracker tab to review & export PDF.");
+      } else {
+        alert(`Error saving to pipeline: ${data.error}`);
+      }
+    } catch (err) {
+      console.error("Save pipeline error:", err);
+      alert("Failed to save application to pipeline");
+    } finally {
+      setIsSavingToPipeline(false);
+    }
+  };
 
   useEffect(() => {
     let active = true;
@@ -228,48 +281,86 @@ export function ApplicationStudioTab({ profile, initialJobId }: ApplicationStudi
         </div>
       )}
 
-      {/* Navigation sub-tabs */}
+      {/* Navigation sub-tabs & Save Action */}
       {(evaluation || tailoredPackage) && (
-        <div className="flex items-center gap-2 border-b border-zinc-200 dark:border-zinc-800 pb-2">
-          <button
-            onClick={() => setViewMode("match")}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-              viewMode === "match"
-                ? "bg-indigo-600 text-white shadow-sm"
-                : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
-            }`}
-          >
-            <Target className="w-3.5 h-3.5" />
-            Match Score & Analysis
-          </button>
-          {tailoredPackage && (
-            <>
-              <button
-                onClick={() => setViewMode("cv")}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                  viewMode === "cv"
-                    ? "bg-emerald-600 text-white shadow-sm"
-                    : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
-                }`}
-              >
-                <FileText className="w-3.5 h-3.5" />
-                Tailored CV (Side-by-Side)
-              </button>
-              {tailoredPackage.coverLetter && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-200 dark:border-zinc-800 pb-2">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setViewMode("match")}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                viewMode === "match"
+                  ? "bg-indigo-600 text-white shadow-sm"
+                  : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+              }`}
+            >
+              <Target className="w-3.5 h-3.5" />
+              Match Score & Analysis
+            </button>
+            {tailoredPackage && (
+              <>
                 <button
-                  onClick={() => setViewMode("cover-letter")}
+                  onClick={() => setViewMode("cv")}
                   className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                    viewMode === "cover-letter"
-                      ? "bg-blue-600 text-white shadow-sm"
+                    viewMode === "cv"
+                      ? "bg-emerald-600 text-white shadow-sm"
                       : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
                   }`}
                 >
-                  <Mail className="w-3.5 h-3.5" />
-                  Cover Letter
+                  <FileText className="w-3.5 h-3.5" />
+                  Tailored CV (Side-by-Side)
                 </button>
+                {tailoredPackage.coverLetter && (
+                  <button
+                    onClick={() => setViewMode("cover-letter")}
+                    className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                      viewMode === "cover-letter"
+                        ? "bg-blue-600 text-white shadow-sm"
+                        : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                    }`}
+                  >
+                    <Mail className="w-3.5 h-3.5" />
+                    Cover Letter
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+
+          {tailoredPackage && (
+            <button
+              onClick={handleSaveToPipeline}
+              disabled={isSavingToPipeline}
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold shadow-sm transition-all"
+            >
+              {isSavingToPipeline ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  Placing in Review Queue...
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  Place in Review Queue
+                </>
               )}
-            </>
+            </button>
           )}
+        </div>
+      )}
+
+      {/* Saved Success Notification */}
+      {savedSuccessMessage && (
+        <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 dark:bg-emerald-950/40 dark:border-emerald-800 flex items-center justify-between text-xs text-emerald-800 dark:text-emerald-300">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span className="font-semibold">{savedSuccessMessage}</span>
+          </div>
+          <button
+            onClick={() => setSavedSuccessMessage(null)}
+            className="text-emerald-600 hover:text-emerald-800 font-bold ml-2"
+          >
+            ✕
+          </button>
         </div>
       )}
 

@@ -2,16 +2,47 @@
 
 ## Test Summary
 * **Test Runner:** Vitest v5.0.5
-* **Total Test Suites:** 6 passed (6 total)
-* **Total Tests:** 36 passed (36 total)
-* **Execution Time:** ~310ms
+* **Total Test Suites:** 9 passed (9 total)
+* **Total Tests:** 47 passed (47 total)
+* **Execution Time:** ~1.3s
+* **Linting:** Clean (0 errors, 0 warnings across all `.ts` and `.tsx` files)
+* **Production Build:** Clean (Next.js 16 Webpack build, 18 routes compiled)
 * **Status:** ALL TESTS PASSING
 
 ---
 
 ## Detailed Test Breakdown
 
-### 1. CV Truth Verifier & Hallucination Guard (`src/lib/tailoring/__tests__/verifier.test.ts`)
+### 1. Application State Machine & Human Gatekeeper (`src/lib/applications/__tests__/state-machine.test.ts`)
+| # | Test Name | Result | Details |
+|---|---|---|---|
+| 1 | Allows legal progression through the pipeline | PASS | Validated `discovered -> matched -> prepared -> review -> approved -> applying -> submitted -> confirmed`. |
+| 2 | Strictly blocks automated system actors from approving an application | PASS | Enforced human-gatekeeper rule: system/AI actor cannot transition to `approved`. |
+| 3 | Strictly blocks illegal state skips (e.g. review straight to applying or submitted) | PASS | Blocked skipping human review and approval gates. |
+| 4 | Strictly requires human action for confirmed state | PASS | Enforced human confirmation evidence requirement for `confirmed`. |
+| 5 | Allows un-approving or withdrawing from review | PASS | Verified bidirectional adjustments (e.g. withdraw, return to review). |
+| 6 | Provides correct available transitions for human actor | PASS | Verified available transition list from `review`. |
+
+---
+
+### 2. PDF Generator & ATS Semantic Templates (`src/lib/documents/__tests__/pdf-generator.test.ts`)
+| # | Test Name | Result | Details |
+|---|---|---|---|
+| 1 | Generates semantic ATS HTML with proper sections and escaping | PASS | Verified semantic typography, standard headers, and contact metadata. |
+| 2 | Generates semantic cover letter HTML | PASS | Verified formal letter styling, recipient, and signature formatting. |
+| 3 | Renders a binary PDF buffer from the tailored CV via Playwright | PASS | Chromium rendered vector ATS PDF with `%PDF-` magic header bytes (~10KB). |
+
+---
+
+### 3. Assisted Form Copilot (`src/lib/copilot/__tests__/form-filler.test.ts`)
+| # | Test Name | Result | Details |
+|---|---|---|---|
+| 1 | Extracts clean candidate form payload with first/last names separated | PASS | Validated name splitting, contact info, headline, and skills list. |
+| 2 | Accurately detects ATS platforms from URLs | PASS | Correctly identified Greenhouse, Lever, Ashby, and Generic portals. |
+
+---
+
+### 4. CV Truth Verifier & Hallucination Guard (`src/lib/tailoring/__tests__/verifier.test.ts`)
 | # | Test Name | Result | Details |
 |---|---|---|---|
 | 1 | Passes when all claims cite verified fact IDs | PASS | Validated 100% verified fact tracing. |
@@ -23,7 +54,7 @@
 
 ---
 
-### 2. Two-Tier Job Matcher (`src/lib/matching/__tests__/matcher.test.ts`)
+### 5. Two-Tier Job Matcher (`src/lib/matching/__tests__/matcher.test.ts`)
 | # | Test Name | Result | Details |
 |---|---|---|---|
 | 1 | Tier 1: Rejects jobs failing geographic eligibility | PASS | Blocked US-only job immediately without LLM tokens. |
@@ -35,7 +66,7 @@
 
 ---
 
-### 3. Geographic Hiring Eligibility & Deduplication (`src/lib/discovery/__tests__/discovery.test.ts`)
+### 6. Geographic Hiring Eligibility & Deduplication (`src/lib/discovery/__tests__/discovery.test.ts`)
 | # | Test Name | Result | Details |
 |---|---|---|---|
 | 1 | Approves explicit Worldwide & Work-From-Anywhere jobs | PASS | Verified positive detection on "Worldwide" and "Open to all countries". |
@@ -46,7 +77,9 @@
 | 6 | Normalizes tracking parameters and generates stable hash | PASS | Stripped `utm_source`, `ref`, and trailing slashes to produce matching hashes. |
 | 7 | Computes normalized composite dedupe keys | PASS | Normalized "Sr. Frontend Engineer" vs "Senior Frontend Engineer". |
 
-### 1. Spec 001: Profile Schema Validation (`src/lib/validation/__tests__/profile.test.ts`)
+---
+
+### 7. Spec 001: Profile Schema Validation (`src/lib/validation/__tests__/profile.test.ts`)
 | # | Test Name | Result | Details |
 |---|---|---|---|
 | 1 | Criterion 1: valid profile passes successfully | PASS | Validated comprehensive profile payload against FullProfileSchema. |
@@ -60,27 +93,21 @@
 
 ---
 
-### 2. Initial CV Extraction Validation (`src/lib/cv/__tests__/initial-cv-data.test.ts`)
+### 8. Initial Profile Data Integrity (`src/lib/cv/__tests__/initial-cv-data.test.ts`)
 | # | Test Name | Result | Details |
 |---|---|---|---|
-| 1 | Validates cleanly against FullProfileSchema | PASS | Initial extracted data passes all schema constraints. |
-| 2 | Ensures ALL imported facts start UNVERIFIED | PASS | Checked all experience and project facts have `isVerified === false` and `source === "cv_import"`. |
-| 3 | Contains all 5 career target profiles | PASS | Frontend, Full-Stack, Backend, Flutter, and AI Application profiles verified. |
-| 4 | Defaults to remote-only with Sri Lanka filter | PASS | Remote enabled, hybrid/onsite disabled, `allowSriLankaRemoteOnly: true`. |
+| 1 | Initial profile matches candidate's actual extracted credentials | PASS | Verified Havindu Hesara's core identity, email, and phone. |
+| 2 | All imported facts are initialized with isVerified: false | PASS | Guarded zero-hallucination baseline. |
+| 3 | Skills map contains required core competencies | PASS | Verified React, Next.js, Spring Boot, MySQL, Flutter presence. |
+| 4 | Experience and project entries have valid atomic facts | PASS | Verified Mobios & Arimac experience facts exist. |
 
 ---
 
-### 3. Service Layer Tests (`src/lib/services/__tests__/profile-service.test.ts`)
+### 9. Profile Service & In-Memory Fallback (`src/lib/services/__tests__/profile-service.test.ts`)
 | # | Test Name | Result | Details |
 |---|---|---|---|
-| 1 | Retrieves profile with initial unverified facts | PASS | ProfileService returns full profile with unverified facts. |
-| 2 | Verifies an individual fact by ID | PASS | Fact toggled to `isVerified: true` and verified in memory / DB. |
-| 3 | Updates preferences and toggles work-mode settings | PASS | Work-mode and salary updates persisted correctly. |
-| 4 | Toggles a career profile enabled state | PASS | Target profile enabled/disabled status updated. |
-| 5 | Verifies all facts in batch | PASS | Batch verification updates all candidate facts to verified. |
-
----
-
-## Static Analysis & Build Verification
-* `npm run lint`: **0 errors, 0 warnings** (ESLint 9 + React 19).
-* `npm run build`: **Compiled successfully** in 1.4s with all static and dynamic routes validated.
+| 1 | In-memory fallback functions when database is offline | PASS | Confirmed resilient zero-downtime development workflow. |
+| 2 | Updates atomic fact verification status | PASS | Verified fact status toggling (`isVerified: true`). |
+| 3 | Verifies all unverified facts in bulk | PASS | Verified bulk approval functionality. |
+| 4 | Updates user preferences with immediate effect | PASS | Verified work-mode and country filtering persistence. |
+| 5 | Toggles active career profiles | PASS | Verified selective enabling/disabling of target role profiles. |

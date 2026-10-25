@@ -6,6 +6,8 @@ import { Navbar } from "@/components/Navbar";
 import { OverviewTab } from "@/components/OverviewTab";
 import { JobExplorerTab } from "@/components/JobExplorerTab";
 import { ApplicationStudioTab } from "@/components/ApplicationStudioTab";
+import { ApplicationTrackerTab } from "@/components/ApplicationTrackerTab";
+import { AnalyticsTab } from "@/components/AnalyticsTab";
 import { CvImportReviewTab } from "@/components/CvImportReviewTab";
 import { ProfileTab } from "@/components/ProfileTab";
 import { CareerProfilesTab } from "@/components/CareerProfilesTab";
@@ -174,6 +176,20 @@ export default function Home() {
             profile={profile}
             initialJobId={selectedStudioJobId}
           />
+        )}
+
+        {activeTab === "applications" && (
+          <ApplicationTrackerTab
+            profile={profile}
+            onOpenInStudio={(jobId) => {
+              setSelectedStudioJobId(jobId);
+              setActiveTab("studio");
+            }}
+          />
+        )}
+
+        {activeTab === "analytics" && (
+          <AnalyticsTab profile={profile} />
         )}
 
         {activeTab === "cv-import" && (

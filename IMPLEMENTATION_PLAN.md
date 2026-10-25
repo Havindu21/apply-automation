@@ -52,25 +52,26 @@
   - Cited fact ID verification pills (`✓ cites fact-id`).
   - Cover letter viewer and gap breakdown.
 
-## Phase 4: Application Studio Document Export & Review Queue (NEXT)
-- [ ] Two-tier matcher:
-  - Tier 1: Deterministic boolean filter (work mode, geography, excluded companies).
-  - Tier 2: Gemini structured scoring (skills alignment, seniority fit, gaps, 0–100 score).
-- [ ] Truthful CV generator:
-  - Automatic career profile selection.
-  - Reordering and tailoring verified facts without altering meaning.
-  - Deterministic verifier: fact ID check, lexical/number match, zero hallucinated skills.
-- [ ] Gap analysis report (unsupported job requirements shown honestly).
+## Phase 4: Application Review Queue & ATS PDF Generation (COMPLETED)
+- [x] ATS-compliant single-column resume template (semantic HTML/CSS with standard headings, selectable text, and print margins).
+- [x] Formal cover letter semantic template with company and role targeting.
+- [x] Playwright headless Chromium vector PDF generator (`page.pdf`).
+- [x] Application state machine (`ApplicationStateMachine`): strict legal transitions from `discovered` to `confirmed applied`.
+- [x] Human Gatekeeper policy: system/AI actors strictly blocked from approving applications or marking confirmed without human action.
+- [x] Application Service (`ApplicationService`) with PostgreSQL persistence and in-memory fallback.
+- [x] PDF streaming download endpoint (`GET /api/applications/[id]/pdf`) and preview endpoint (`GET /api/applications/[id]/preview`).
+- [x] Review Queue & Pipeline Web UI (`ApplicationTrackerTab.tsx`) with Kanban columns, approval actions, and audit trail.
 
-## Phase 4: Application Studio, Review Queue & ATS PDF Generation
-- [ ] Application Studio UI: side-by-side diff comparison between Base CV and Tailored CV.
-- [ ] ATS-compliant single-column resume template (semantic HTML/CSS).
-- [ ] Playwright server-side PDF generator (`page.pdf`).
-- [ ] Application pipeline status tracker (Discovered -> Matched -> Prepared -> Review -> Approved -> Applying -> Confirmed).
-
-## Phase 5: Assisted Application Copilot & Analytics
-- [ ] Playwright headed browser form fill (Greenhouse, Lever, Ashby):
-  - Pre-fills contact details, uploads generated PDF, stops for user inspection.
-  - Final human click required for submission.
-- [ ] Email application drafter (mailto / formatted copy).
-- [ ] Analytics dashboard: funnel metrics, response rate, interview conversion, source effectiveness.
+## Phase 5: Assisted Application Copilot & Analytics (COMPLETED)
+- [x] Form Copilot (`FormCopilot` in `src/lib/copilot/form-filler.ts`):
+  - ATS platform detection (Greenhouse, Lever, Ashby, Generic).
+  - Candidate form payload preparation (first/last names, contact info, portfolio, skills, summary).
+  - Headed Playwright browser automation pre-populating inputs and uploading tailored resume PDF.
+  - Non-negotiable human gatekeeper: strictly halts before final submit for user inspection and click.
+- [x] Quick-Fill Clipboard Drawer with one-click copy buttons for candidate contact info and tailored content.
+- [x] Application submission confirmation workflow with user evidence logging.
+- [x] Search & Conversion Analytics dashboard (`AnalyticsTab.tsx`):
+  - Stage-by-stage pipeline conversion funnel.
+  - Interview conversion rate tracking.
+  - 100% verified facts grounding compliance metric.
+  - Geographic filter yield (Worldwide / Sri Lanka remote roles count).

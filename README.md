@@ -74,10 +74,10 @@ npm run build
 
 ---
 
-## Phased Roadmap
+## Phased Roadmap & Status
 
 * **Phase 1 (Complete):** Foundation, PostgreSQL database, Drizzle ORM, atomic fact schema, CV import verification UI, career profiles, work-mode preference controls, and pg-boss worker skeleton.
-* **Phase 2:** Modular job discovery adapters (Remotive, RemoteOK, Jobicy, WeWorkRemotely RSS, Greenhouse/Lever watchlist, manual URL paste), geographic eligibility filtering, deduplication.
-* **Phase 3:** Two-tier matching engine (deterministic filters + Gemini structured scoring) and truthful CV tailoring with deterministic fact verifier.
-* **Phase 4:** Application Studio, side-by-side CV comparison, ATS PDF generation, and review queue.
-* **Phase 5:** Assisted application copilot (Playwright form fill with human final click), email drafting, application tracker, and analytics dashboard.
+* **Phase 2 (Complete):** Modular job discovery adapters (Remotive, RemoteOK, Jobicy, WeWorkRemotely RSS, Greenhouse/Lever watchlist, manual URL paste), geographic eligibility filtering, and SHA-256 deduplication.
+* **Phase 3 (Complete):** Two-tier matching engine (deterministic filters + Gemini structured scoring) and truthful CV tailoring with deterministic fact verifier.
+* **Phase 4 (Complete):** Application Studio, side-by-side CV comparison, ATS PDF generation with Playwright Chromium, and human review pipeline.
+* **Phase 5 (Complete):** Assisted application copilot (Playwright form fill with human final click), Quick-Fill Clipboard drawer, application state machine, and search & conversion analytics dashboard.

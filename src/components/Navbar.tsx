@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Compass, ShieldCheck, UserCheck, Briefcase, Sliders, Activity, Sparkles } from "lucide-react";
+import { Compass, ShieldCheck, UserCheck, Sliders, Activity, Sparkles, Send, BarChart3 } from "lucide-react";
 
 interface NavbarProps {
   activeTab: string;
@@ -13,18 +13,19 @@ export function Navbar({ activeTab, setActiveTab, unverifiedCount }: NavbarProps
   const tabs = [
     { id: "overview", label: "Overview", icon: Compass },
     { id: "jobs", label: "Job Explorer", icon: Compass },
-    { id: "studio", label: "Application Studio", icon: Sparkles },
+    { id: "studio", label: "Studio", icon: Sparkles },
+    { id: "applications", label: "Applications", icon: Send },
+    { id: "analytics", label: "Analytics", icon: BarChart3 },
     {
       id: "cv-import",
-      label: "CV Import Review",
+      label: "CV Import",
       icon: ShieldCheck,
-      badge: unverifiedCount > 0 ? `${unverifiedCount} unverified` : "All Verified",
+      badge: unverifiedCount > 0 ? `${unverifiedCount} unverified` : "Verified",
       badgeColor: unverifiedCount > 0 ? "bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300" : "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300",
     },
-    { id: "profile", label: "My Profile & Facts", icon: UserCheck },
-    { id: "career-profiles", label: "Career Profiles", icon: Briefcase },
+    { id: "profile", label: "Profile", icon: UserCheck },
     { id: "preferences", label: "Search & Work Modes", icon: Sliders },
-    { id: "automation", label: "Automation & Logs", icon: Activity },
+    { id: "automation", label: "Automation", icon: Activity },
   ];
 
   return (
@@ -37,8 +38,8 @@ export function Navbar({ activeTab, setActiveTab, unverifiedCount }: NavbarProps
             </div>
             <div>
               <span className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">JobPilot</span>
-              <span className="ml-2 text-xs font-medium px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800">
-                Phase 2 Active
+              <span className="ml-2 text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800">
+                Phase 5 Copilot
               </span>
             </div>
           </div>
