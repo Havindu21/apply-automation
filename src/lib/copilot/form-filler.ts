@@ -1,6 +1,6 @@
 import { FullProfile } from "../validation/profile";
 import { TailoredCVSchema } from "../tailoring/verifier";
-import { validateSafeJobUrl } from "../validation/url";
+import { validateSafeJobUrl, validateSafeJobUrlAsync } from "../validation/url";
 import { chromium, BrowserContext, Page } from "playwright";
 import * as fs from "fs";
 import * as path from "path";
@@ -81,7 +81,7 @@ export class FormCopilot {
     pdfBuffer?: Buffer,
     headed: boolean = true
   ): Promise<AssistedSessionResult> {
-    const urlCheck = validateSafeJobUrl(url);
+    const urlCheck = await validateSafeJobUrlAsync(url);
     if (!urlCheck.isValid || !urlCheck.cleanUrl) {
       return {
         sessionId: `err_${Date.now()}`,
@@ -120,7 +120,23 @@ export class FormCopilot {
       });
 
       const page = await context.newPage();
-      await page.goto(url, { waitUntil: "domcontentloaded", timeout: 25000 });
+
+      // Guard browser subresource requests against SSRF and private network leakage
+      await page.route("**/*", async (route) => {
+        const reqUrl = route.request().url();
+        // Allow data: and blob: URLs
+        if (reqUrl.startsWith("data:") || reqUrl.startsWith("blob:")) {
+          return route.continue();
+        }
+        const check = validateSafeJobUrl(reqUrl);
+        if (!check.isValid) {
+          console.warn(`[FormCopilot] Blocked disallowed subresource request: ${reqUrl}`);
+          return route.abort();
+        }
+        return route.continue();
+      });
+
+      await page.goto(safeUrl, { waitUntil: "domcontentloaded", timeout: 25000 });
 
       // Intelligent selector matching based on ATS or generic form inputs
       await this.fillFormField(page, ['#first_name', 'input[name*="first_name" i]', 'input[name*="firstName" i]', '#firstName'], payload.firstName, "First Name", filledFields, unfilledFields);

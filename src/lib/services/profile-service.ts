@@ -7,6 +7,8 @@ import {
   experiences,
   projects,
   skills,
+  experienceFacts,
+  projectFacts,
 } from "@/db/schema";
 import { initialImportedCVProfile } from "../cv/initial-cv-data";
 import { FullProfile, UserPreferences, AtomicFact, Skill } from "../validation/profile";
@@ -49,6 +51,8 @@ export class ProfileService {
       const dbFacts = await db.select().from(facts).where(eq(facts.profileId, profileRow.id));
       const dbExps = await db.select().from(experiences).where(eq(experiences.profileId, profileRow.id));
       const dbProjects = await db.select().from(projects).where(eq(projects.profileId, profileRow.id));
+      const dbExpFacts = await db.select().from(experienceFacts);
+      const dbProjFacts = await db.select().from(projectFacts);
       const dbCareerProfiles = await db.select().from(careerProfiles).where(eq(careerProfiles.profileId, profileRow.id));
       const dbPreferences = await db.query.userPreferences.findFirst({
         where: eq(userPreferences.profileId, profileRow.id),
@@ -69,48 +73,58 @@ export class ProfileService {
           name: s.name,
           category: s.category as Skill["category"],
         })),
-        experiences: dbExps.map((e) => ({
-          id: e.id,
-          company: e.company,
-          role: e.role,
-          location: e.location || undefined,
-          startDate: e.startDate,
-          endDate: e.endDate,
-          isCurrent: e.isCurrent,
-          facts: dbFacts
-            .filter((f) => f.id.includes(e.id.split("-")[1] || "calsda"))
-            .map((f) => ({
-              id: f.id,
-              text: f.text,
-              skillIds: f.skillIds,
-              evidence: f.evidence || undefined,
-              source: f.source as AtomicFact["source"],
-              isVerified: f.isVerified,
-              version: f.version,
-            })),
-        })),
-        projects: dbProjects.map((p) => ({
-          id: p.id,
-          name: p.name,
-          role: p.role || undefined,
-          description: p.description || undefined,
-          liveUrl: p.liveUrl || undefined,
-          repoUrl: p.repoUrl || undefined,
-          technologies: p.technologies,
-          startDate: p.startDate || undefined,
-          endDate: p.endDate || undefined,
-          facts: dbFacts
-            .filter((f) => f.id.includes(p.id.split("-")[1] || "bns"))
-            .map((f) => ({
-              id: f.id,
-              text: f.text,
-              skillIds: f.skillIds,
-              evidence: f.evidence || undefined,
-              source: f.source as AtomicFact["source"],
-              isVerified: f.isVerified,
-              version: f.version,
-            })),
-        })),
+        experiences: dbExps.map((e) => {
+          const linkedFactIds = new Set(
+            dbExpFacts.filter((ef) => ef.experienceId === e.id).map((ef) => ef.factId)
+          );
+          return {
+            id: e.id,
+            company: e.company,
+            role: e.role,
+            location: e.location || undefined,
+            startDate: e.startDate,
+            endDate: e.endDate,
+            isCurrent: e.isCurrent,
+            facts: dbFacts
+              .filter((f) => linkedFactIds.has(f.id))
+              .map((f) => ({
+                id: f.id,
+                text: f.text,
+                skillIds: f.skillIds,
+                evidence: f.evidence || undefined,
+                source: f.source as AtomicFact["source"],
+                isVerified: f.isVerified,
+                version: f.version,
+              })),
+          };
+        }),
+        projects: dbProjects.map((p) => {
+          const linkedFactIds = new Set(
+            dbProjFacts.filter((pf) => pf.projectId === p.id).map((pf) => pf.factId)
+          );
+          return {
+            id: p.id,
+            name: p.name,
+            role: p.role || undefined,
+            description: p.description || undefined,
+            liveUrl: p.liveUrl || undefined,
+            repoUrl: p.repoUrl || undefined,
+            technologies: p.technologies,
+            startDate: p.startDate || undefined,
+            endDate: p.endDate || undefined,
+            facts: dbFacts
+              .filter((f) => linkedFactIds.has(f.id))
+              .map((f) => ({
+                id: f.id,
+                text: f.text,
+                skillIds: f.skillIds,
+                evidence: f.evidence || undefined,
+                source: f.source as AtomicFact["source"],
+                isVerified: f.isVerified,
+                version: f.version,
+              })),
+          };
+        }),
         educations: inMemoryProfile.educations,
         careerProfiles: dbCareerProfiles.map((cp) => ({
           id: cp.id,

@@ -30,7 +30,8 @@ export class JobMatcher {
     // --- TIER 1: DETERMINISTIC PRE-FILTERS ---
 
     // 1. Geographic Hiring Filter
-    if (prefs.allowSriLankaRemoteOnly && !job.eligibility.isEligibleForSriLanka) {
+    const isGeoEligible = job.eligibility ? job.eligibility.isEligibleForSriLanka : true;
+    if (prefs.allowSriLankaRemoteOnly && !isGeoEligible) {
       return {
         jobId: job.urlHash,
         careerProfileId: profile.careerProfiles[0]?.id || "cp-general",
@@ -40,7 +41,7 @@ export class JobMatcher {
         strengths: [],
         gaps: ["Ineligible location / work authorization constraint"],
         seniorityFit: "Not eligible",
-        explanation: `Job failed geographic eligibility: ${job.eligibility.reason}`,
+        explanation: `Job failed geographic eligibility: ${job.eligibility?.reason || "Restricted location"}`,
         evaluatedAt: new Date(),
       };
     }

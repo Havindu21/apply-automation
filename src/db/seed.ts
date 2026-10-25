@@ -17,6 +17,17 @@ export async function seedDatabase() {
   console.log("Seeding database with Havindu's CV profile (unverified initial import)...");
   
   try {
+    // Clear old profile-related seed records to guarantee clean state
+    await db.delete(experienceFacts);
+    await db.delete(projectFacts);
+    await db.delete(facts);
+    await db.delete(experiences);
+    await db.delete(projects);
+    await db.delete(skills);
+    await db.delete(educations);
+    await db.delete(careerProfiles);
+    await db.delete(userPreferences);
+
     // 1. Upsert Profile
     await db.insert(profiles).values({
       id: initialImportedCVProfile.id,

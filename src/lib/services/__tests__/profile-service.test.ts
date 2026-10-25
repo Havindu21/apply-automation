@@ -1,7 +1,12 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeAll } from "vitest";
 import { ProfileService } from "../profile-service";
 
 describe("ProfileService Unit Tests", () => {
+  beforeAll(async () => {
+    // Ensure test isolation by un-verifying sample fact
+    await ProfileService.verifyFact("fact-calsda-data-freeze", false);
+  });
+
   it("retrieves the profile with initial unverified facts", async () => {
     const profile = await ProfileService.getProfile();
     expect(profile.fullName).toBe("Havindu Hesara");

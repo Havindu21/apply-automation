@@ -17,8 +17,8 @@ export interface GenerateStructuredOptions {
 
 export class GeminiClient {
   private apiKey: string;
-  private primaryModel = "gemini-flash-latest";
-  private fallbackModel = "gemini-pro-latest";
+  private primaryModel = "gemini-3.8-flash";
+  private fallbackModel = "gemini-flash-latest";
 
   constructor(apiKey?: string) {
     this.apiKey = apiKey || process.env.GEMINI_API_KEY || "";

@@ -1,6 +1,6 @@
 import { PgBoss } from "pg-boss";
 import * as dotenv from "dotenv";
-import { db } from "../db";
+import { db } from "../db/index";
 import { jobExecutionLogs } from "../db/schema";
 import { ProfileService } from "../lib/services/profile-service";
 import { discoveryOrchestrator } from "../lib/discovery/orchestrator";
@@ -53,6 +53,11 @@ export class JobWorkerService {
 
   private async registerHandlers() {
     if (!this.boss) return;
+
+    // Ensure queues are created in pg-boss
+    await this.boss.createQueue("job-discovery");
+    await this.boss.createQueue("job-matching");
+    await this.boss.createQueue("health-check");
 
     // 1. Job Discovery Worker
     await this.boss.work("job-discovery", { batchSize: 1 }, async ([job]) => {
