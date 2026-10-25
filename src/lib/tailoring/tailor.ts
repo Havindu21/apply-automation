@@ -13,6 +13,7 @@ export interface TailoredApplicationPackage {
   coverLetter?: string;
   verification: VerificationResult;
   createdAt: Date;
+  tailoringEngine?: "gemini_ai" | "deterministic_fallback";
 }
 
 const inMemoryPackages = new Map<string, TailoredApplicationPackage>();
@@ -42,16 +43,20 @@ export class CVTailorService {
       this.matchCareerProfile(job.title, job.description, activeCareerProfiles);
 
     let tailoredCV: TailoredCVSchema;
+    let tailoringEngine: "gemini_ai" | "deterministic_fallback" = "deterministic_fallback";
 
     if (!geminiClient.isConfigured()) {
       // Offline fallback: Direct verified fact mapping
       tailoredCV = this.generateDeterministicFallbackCV(profile, selectedCareerProfile);
+      tailoringEngine = "deterministic_fallback";
     } else {
       try {
         tailoredCV = await this.callGeminiTailor(job, profile, selectedCareerProfile, verifiedFacts);
+        tailoringEngine = "gemini_ai";
       } catch (err) {
         console.warn("[CVTailorService] Gemini generation failed, using deterministic verified CV:", err);
         tailoredCV = this.generateDeterministicFallbackCV(profile, selectedCareerProfile);
+        tailoringEngine = "deterministic_fallback";
       }
     }
 
@@ -62,6 +67,7 @@ export class CVTailorService {
     if (!verification.isValid) {
       console.warn("[CVTailorService] Gemini output failed verification rules, falling back to safe canonical CV:", verification.errors);
       tailoredCV = this.generateDeterministicFallbackCV(profile, selectedCareerProfile);
+      tailoringEngine = "deterministic_fallback";
       verification = CVTruthVerifier.verify(tailoredCV, profile);
       if (!verification.isValid) {
         throw new Error(`Fallback CV generation failed verification rules: ${verification.errors.join("; ")}`);
@@ -71,7 +77,7 @@ export class CVTailorService {
     // 4. Generate grounded cover letter
     let coverLetter: string | undefined;
     try {
-      if (geminiClient.isConfigured()) {
+      if (geminiClient.isConfigured() && tailoringEngine === "gemini_ai") {
         coverLetter = await this.generateCoverLetter(job, profile, selectedCareerProfile, verifiedFacts);
       }
     } catch {
@@ -85,6 +91,7 @@ export class CVTailorService {
       coverLetter,
       verification,
       createdAt: new Date(),
+      tailoringEngine,
     };
 
     inMemoryPackages.set(job.urlHash, packageResult);

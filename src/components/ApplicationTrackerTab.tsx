@@ -35,6 +35,7 @@ export function ApplicationTrackerTab({ profile }: ApplicationTrackerTabProps) {
 
   // Confirmation form state
   const [confirmEvidence, setConfirmEvidence] = useState("");
+  const [hasUserConfirmedOutcome, setHasUserConfirmedOutcome] = useState(false);
 
   // Copied indicator for Quick Fill
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
@@ -548,37 +549,57 @@ export function ApplicationTrackerTab({ profile }: ApplicationTrackerTabProps) {
 
             <div className="space-y-2">
               <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
-                Confirmation Evidence / Notes (Optional)
+                Actual Submission Outcome / Evidence (Required)
               </label>
               <textarea
                 rows={3}
-                placeholder="e.g. Confirmation email received, Application ID: #98765, Submitted via Greenhouse portal"
+                placeholder="e.g. Received confirmation email from employer, Application Reference #84920, Greenhouse confirmation screen verified"
                 value={confirmEvidence}
                 onChange={(e) => setConfirmEvidence(e.target.value)}
                 className="w-full text-xs p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
+              <p className="text-[11px] text-zinc-500">
+                An attempted form fill does not qualify. You must provide actual proof of completed submission.
+              </p>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2">
+            <div className="pt-1">
+              <label className="flex items-start gap-2.5 text-xs text-zinc-700 dark:text-zinc-300 font-semibold cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={hasUserConfirmedOutcome}
+                  onChange={(e) => setHasUserConfirmedOutcome(e.target.checked)}
+                  className="mt-0.5 rounded text-emerald-600 focus:ring-emerald-500"
+                />
+                <span>
+                  I certify that I have verified the employer form, completed the final submit click myself, and verified the successful submission outcome.
+                </span>
+              </label>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-zinc-100 dark:border-zinc-800">
               <button
                 onClick={() => {
                   setModalType(null);
                   setActiveModalApp(null);
+                  setHasUserConfirmedOutcome(false);
+                  setConfirmEvidence("");
                 }}
                 className="px-4 py-2 text-xs font-semibold rounded-xl text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
               >
                 Cancel
               </button>
               <button
+                disabled={!hasUserConfirmedOutcome || confirmEvidence.trim().length < 5}
                 onClick={() =>
                   handleTransition(
                     activeModalApp.id,
                     "confirmed",
                     "Application confirmed by human user",
-                    confirmEvidence || "Confirmed via user verification"
+                    confirmEvidence.trim()
                   )
                 }
-                className="px-4 py-2 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm flex items-center gap-1.5"
+                className="px-4 py-2 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white shadow-sm flex items-center gap-1.5"
               >
                 <CheckCircle2 className="w-4 h-4" />
                 Mark Confirmed Applied

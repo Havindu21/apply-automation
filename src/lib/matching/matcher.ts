@@ -16,6 +16,7 @@ export interface MatchEvaluation {
   seniorityFit: string;
   explanation: string;
   evaluatedAt: Date;
+  evaluationEngine?: "gemini_ai" | "deterministic_fallback";
 }
 
 const inMemoryMatches = new Map<string, MatchEvaluation>();
@@ -43,6 +44,7 @@ export class JobMatcher {
         seniorityFit: "Not eligible",
         explanation: `Job failed geographic eligibility: ${job.eligibility?.reason || "Restricted location"}`,
         evaluatedAt: new Date(),
+        evaluationEngine: "deterministic_fallback",
       };
     }
 
@@ -65,6 +67,7 @@ export class JobMatcher {
         seniorityFit: "Incompatible work mode",
         explanation: `Candidate work-mode settings do not permit ${jobMode} employment.`,
         evaluatedAt: new Date(),
+        evaluationEngine: "deterministic_fallback",
       };
     }
 
@@ -81,6 +84,7 @@ export class JobMatcher {
         seniorityFit: "Excluded company",
         explanation: `Company '${job.company}' is in your excluded companies list.`,
         evaluatedAt: new Date(),
+        evaluationEngine: "deterministic_fallback",
       };
     }
 
@@ -234,6 +238,7 @@ Respond strictly in valid JSON matching this structure:
       seniorityFit: parsed.seniorityFit || "Early-Career Software Engineer",
       explanation: parsed.explanation || "Evaluation completed.",
       evaluatedAt: new Date(),
+      evaluationEngine: "gemini_ai",
     };
   }
 
@@ -274,6 +279,7 @@ Respond strictly in valid JSON matching this structure:
       seniorityFit: "Associate / Early-Career Engineer",
       explanation: `Deterministic scoring evaluated ${matchedSkills.length} matching verified skills aligned with ${careerProfile.title}.`,
       evaluatedAt: new Date(),
+      evaluationEngine: "deterministic_fallback",
     };
   }
 

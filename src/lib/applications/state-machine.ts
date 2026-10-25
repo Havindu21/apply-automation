@@ -58,7 +58,8 @@ export class ApplicationStateMachine {
   static validateTransition(
     from: ApplicationStatus,
     to: ApplicationStatus,
-    actor: TransitionActor = "human"
+    actor: TransitionActor = "human",
+    evidence?: string
   ): TransitionValidationResult {
     // 1. Same state is a no-op
     if (from === to) {
@@ -82,12 +83,20 @@ export class ApplicationStateMachine {
       };
     }
 
-    // 4. Human Confirmation Rule: Confirmed applications require explicit human signoff
-    if (to === "confirmed" && actor !== "human") {
-      return {
-        valid: false,
-        error: `Policy violation: "confirmed" state requires explicit human confirmation evidence.`,
-      };
+    // 4. Human Confirmation Rule: Confirmed applications require explicit human signoff and submission evidence
+    if (to === "confirmed") {
+      if (actor !== "human") {
+        return {
+          valid: false,
+          error: `Policy violation: "confirmed" state requires explicit human confirmation evidence. System/AI actors cannot confirm submission.`,
+        };
+      }
+      if (!evidence || evidence.trim().length < 5) {
+        return {
+          valid: false,
+          error: `Policy violation: "confirmed" state requires actual user-confirmed submission outcome evidence (e.g. Confirmation Reference Number, Confirmation URL, or Email proof). An attempted form fill does not qualify as confirmation.`,
+        };
+      }
     }
 
     return { valid: true };

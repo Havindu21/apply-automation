@@ -233,7 +233,12 @@ export class ApplicationService {
       throw new Error(`Application with ID "${id}" not found.`);
     }
 
-    const validation = ApplicationStateMachine.validateTransition(app.status, targetStatus, actor);
+    const validation = ApplicationStateMachine.validateTransition(
+      app.status,
+      targetStatus,
+      actor,
+      options?.evidence
+    );
     if (!validation.valid) {
       throw new Error(validation.error || `Invalid state transition from ${app.status} to ${targetStatus}`);
     }

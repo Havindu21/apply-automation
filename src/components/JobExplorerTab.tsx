@@ -86,13 +86,27 @@ export function JobExplorerTab({ onOpenInStudio }: JobExplorerTabProps) {
   const handleRunDiscovery = async () => {
     setIsDiscovering(true);
     try {
-      const res = await fetch("/api/jobs", {
+      const res = await fetch("/api/automation/trigger", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ source: selectedSource !== "all" ? selectedSource : undefined }),
       });
       const data = await res.json();
       if (data.success) {
+        // Poll worker status from /api/automation/logs
+        let attempts = 0;
+        while (attempts < 8) {
+          await new Promise((r) => setTimeout(r, 1200));
+          try {
+            const logsRes = await fetch("/api/automation/logs");
+            const logsData = await logsRes.json();
+            const latestLog = logsData.logs?.[0];
+            if (latestLog && latestLog.status === "completed") {
+              break;
+            }
+          } catch {}
+          attempts++;
+        }
         await reloadJobs();
       }
     } catch (err) {

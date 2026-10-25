@@ -16,6 +16,7 @@ import {
   Target,
   ExternalLink,
   Building,
+  Sliders,
 } from "lucide-react";
 
 interface ApplicationStudioTabProps {
@@ -378,11 +379,24 @@ export function ApplicationStudioTab({ profile, initialJobId }: ApplicationStudi
             </div>
 
             <div className="space-y-2 md:col-span-2">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Seniority & Target Profile</span>
-                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-200">
-                  {evaluation.careerProfileTitle}
-                </span>
+                <div className="flex items-center gap-2">
+                  {evaluation.evaluationEngine === "gemini_ai" ? (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/60 dark:text-purple-200 border border-purple-300 dark:border-purple-800">
+                      <Sparkles className="w-3 h-3 text-purple-600" />
+                      AI-Generated Analysis (Gemini)
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200 border border-amber-300 dark:border-amber-800">
+                      <Sliders className="w-3 h-3 text-amber-600" />
+                      Deterministic Rule-Based Fallback (Not AI)
+                    </span>
+                  )}
+                  <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-200">
+                    {evaluation.careerProfileTitle}
+                  </span>
+                </div>
               </div>
               <h4 className="text-base font-bold text-zinc-900 dark:text-zinc-100">
                 {evaluation.seniorityFit}
@@ -434,17 +448,39 @@ export function ApplicationStudioTab({ profile, initialJobId }: ApplicationStudi
       {viewMode === "cv" && tailoredPackage && (
         <div className="space-y-6">
           {/* Verification Badge Bar */}
-          <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-200 flex items-center justify-between text-xs font-semibold">
+          <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-semibold">
             <div className="flex items-center gap-2">
-              <ShieldCheck className="w-5 h-5 text-emerald-600" />
+              <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
               <span>
                 Zero-Hallucination Guard Passed: {tailoredPackage.verification.verifiedFactCount} claims grounded in verified fact IDs.
               </span>
             </div>
-            <span className="px-2.5 py-0.5 rounded-md bg-emerald-600 text-white font-mono text-[11px]">
-              VERIFIED 100%
-            </span>
+            <div className="flex items-center gap-2">
+              {tailoredPackage.tailoringEngine === "gemini_ai" ? (
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/60 dark:text-purple-200 border border-purple-300 dark:border-purple-800">
+                  <Sparkles className="w-3 h-3 text-purple-600" />
+                  AI-Tailored (Gemini)
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200 border border-amber-300 dark:border-amber-800">
+                  <Sliders className="w-3 h-3 text-amber-600" />
+                  Deterministic Rule-Based Fallback (Not AI)
+                </span>
+              )}
+              <span className="px-2.5 py-0.5 rounded-md bg-emerald-600 text-white font-mono text-[11px]">
+                VERIFIED 100%
+              </span>
+            </div>
           </div>
+
+          {tailoredPackage.tailoringEngine === "deterministic_fallback" && (
+            <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 dark:bg-amber-950/30 dark:border-amber-900 text-xs text-amber-800 dark:text-amber-200 flex items-start gap-2.5">
+              <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold">Offline / Rule-Based Fallback Notice:</span> This CV was generated using deterministic canonical fact mapping from your verified profile because live Gemini AI was unavailable or rate-limited. It is <strong>NOT</strong> an AI-synthesized output, but is 100% truthful and ATS-ready.
+              </div>
+            </div>
+          )}
 
           {/* Headline & Summary */}
           <div className="p-6 rounded-2xl bg-white border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 space-y-3 shadow-sm">

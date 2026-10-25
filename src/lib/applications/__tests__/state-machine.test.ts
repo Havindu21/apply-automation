@@ -10,7 +10,17 @@ describe("ApplicationStateMachine", () => {
     expect(ApplicationStateMachine.validateTransition("review", "approved", "human").valid).toBe(true);
     expect(ApplicationStateMachine.validateTransition("approved", "applying", "human").valid).toBe(true);
     expect(ApplicationStateMachine.validateTransition("applying", "submitted", "human").valid).toBe(true);
-    expect(ApplicationStateMachine.validateTransition("submitted", "confirmed", "human").valid).toBe(true);
+    expect(ApplicationStateMachine.validateTransition("submitted", "confirmed", "human", "Ref #12345 verified via email").valid).toBe(true);
+  });
+
+  it("strictly blocks confirmed state without actual submission outcome evidence", () => {
+    const noEvidence = ApplicationStateMachine.validateTransition("submitted", "confirmed", "human");
+    expect(noEvidence.valid).toBe(false);
+    expect(noEvidence.error).toContain("requires actual user-confirmed submission outcome evidence");
+
+    const shortEvidence = ApplicationStateMachine.validateTransition("submitted", "confirmed", "human", "ok");
+    expect(shortEvidence.valid).toBe(false);
+    expect(shortEvidence.error).toContain("requires actual user-confirmed submission outcome evidence");
   });
 
   it("strictly blocks automated system actors from approving an application", () => {

@@ -14,21 +14,13 @@ import {
 import { initialImportedCVProfile } from "../lib/cv/initial-cv-data";
 
 export async function seedDatabase() {
-  console.log("Seeding database with Havindu's CV profile (unverified initial import)...");
+  console.log("Seeding database with Havindu's CV profile (safe & non-destructive)...");
   
   try {
-    // Clear old profile-related seed records to guarantee clean state
-    await db.delete(experienceFacts);
-    await db.delete(projectFacts);
-    await db.delete(facts);
-    await db.delete(experiences);
-    await db.delete(projects);
-    await db.delete(skills);
-    await db.delete(educations);
-    await db.delete(careerProfiles);
-    await db.delete(userPreferences);
-
-    // 1. Upsert Profile
+    // Non-destructive seeding: Never delete or overwrite existing user-verified facts,
+    // profile edits, matches, or application history.
+    
+    // 1. Insert Profile (if not existing)
     await db.insert(profiles).values({
       id: initialImportedCVProfile.id,
       fullName: initialImportedCVProfile.fullName,
@@ -39,20 +31,7 @@ export async function seedDatabase() {
       summary: initialImportedCVProfile.summary,
       githubUrl: initialImportedCVProfile.githubUrl,
       linkedinUrl: initialImportedCVProfile.linkedinUrl,
-    }).onConflictDoUpdate({
-      target: profiles.id,
-      set: {
-        fullName: initialImportedCVProfile.fullName,
-        email: initialImportedCVProfile.email,
-        phone: initialImportedCVProfile.phone,
-        location: initialImportedCVProfile.location,
-        headline: initialImportedCVProfile.headline,
-        summary: initialImportedCVProfile.summary,
-        githubUrl: initialImportedCVProfile.githubUrl,
-        linkedinUrl: initialImportedCVProfile.linkedinUrl,
-        updatedAt: new Date(),
-      },
-    });
+    }).onConflictDoNothing({ target: profiles.id });
 
     // 2. Upsert Skills
     for (const skill of initialImportedCVProfile.skills) {

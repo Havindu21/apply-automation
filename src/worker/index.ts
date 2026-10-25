@@ -12,9 +12,44 @@ const connectionString =
   process.env.DATABASE_URL ||
   "postgresql://jobpilot:jobpilot_secret@localhost:5432/jobpilot";
 
+let clientBoss: PgBoss | null = null;
+
+export async function getQueueClient(): Promise<PgBoss> {
+  if (clientBoss) {
+    return clientBoss;
+  }
+  const conn =
+    process.env.PGBOSS_DATABASE_URL ||
+    process.env.DATABASE_URL ||
+    "postgresql://jobpilot:jobpilot_secret@localhost:5432/jobpilot";
+
+  clientBoss = new PgBoss({
+    connectionString: conn,
+    max: 2,
+    schema: "pgboss",
+  });
+  await clientBoss.start();
+  try { await clientBoss.createQueue("job-discovery"); } catch {}
+  try { await clientBoss.createQueue("job-matching"); } catch {}
+  try { await clientBoss.createQueue("sync-schedule"); } catch {}
+  try { await clientBoss.createQueue("health-check"); } catch {}
+  return clientBoss;
+}
+
+export async function enqueueDiscoveryJob(source?: string): Promise<string | null> {
+  const boss = await getQueueClient();
+  return await boss.send("job-discovery", { source: source || "all" }, { retryLimit: 3 });
+}
+
+export async function enqueueScheduleSync(): Promise<string | null> {
+  const boss = await getQueueClient();
+  return await boss.send("sync-schedule", { timestamp: Date.now() });
+}
+
 export class JobWorkerService {
   private boss: PgBoss | null = null;
   private isRunning: boolean = false;
+  private scheduleInterval: NodeJS.Timeout | null = null;
 
   async start() {
     console.log("Starting JobPilot Background Worker...");
@@ -41,6 +76,11 @@ export class JobWorkerService {
       // Schedule recurring jobs based on profile preferences
       await this.syncSchedule();
 
+      // Periodic check to ensure worker schedule reflects any preference updates
+      this.scheduleInterval = setInterval(() => {
+        this.syncSchedule().catch((e) => console.warn("[JobWorker] Periodic sync warning:", e));
+      }, 60000);
+
       console.log("[JobWorker] All job handlers and schedules initialized.");
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Unknown error";
@@ -57,7 +97,14 @@ export class JobWorkerService {
     // Ensure queues are created in pg-boss
     await this.boss.createQueue("job-discovery");
     await this.boss.createQueue("job-matching");
+    await this.boss.createQueue("sync-schedule");
     await this.boss.createQueue("health-check");
+
+    // 0. Schedule Synchronization Worker
+    await this.boss.work("sync-schedule", async () => {
+      console.log("[JobWorker] Received schedule sync request from web UI.");
+      await this.syncSchedule();
+    });
 
     // 1. Job Discovery Worker
     await this.boss.work("job-discovery", { batchSize: 1 }, async ([job]) => {
@@ -171,8 +218,7 @@ export class JobWorkerService {
   }
 
   async triggerManualDiscovery(source?: string) {
-    if (!this.boss) throw new Error("Worker is not connected to PostgreSQL queue");
-    return await this.boss.send("job-discovery", { source: source || "all" }, { retryLimit: 3 });
+    return await enqueueDiscoveryJob(source);
   }
 
   private async recordJobLog(entry: {
@@ -217,6 +263,10 @@ export class JobWorkerService {
   }
 
   async stop() {
+    if (this.scheduleInterval) {
+      clearInterval(this.scheduleInterval);
+      this.scheduleInterval = null;
+    }
     if (this.boss) {
       console.log("[JobWorker] Stopping worker...");
       await this.boss.stop();
