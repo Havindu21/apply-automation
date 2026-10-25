@@ -2,9 +2,37 @@
 
 ## Status Summary
 
-* **Current Phase:** Phase 1 (Foundation, Database & Profile Fact Engine) — **COMPLETED**
-* **Next Phase:** Phase 2 (Real Job Discovery, Filtering & Deduplication)
-* **Overall Health:** All 17 unit tests passing, production build passing, 0 ESLint errors/warnings.
+* **Current Phase:** Phase 2 (Real Job Discovery, Filtering & Deduplication) — **COMPLETED**
+* **Next Phase:** Phase 3 (Explainable Matching & Truthful CV Tailoring)
+* **Overall Health:** 24/24 unit tests passing, production build passing, 0 ESLint errors/warnings.
+
+---
+
+## Completed Milestones in Phase 2
+
+1. **Modular Job Source Adapters:**
+   - Remotive adapter fetching real developer postings with `candidate_required_location`.
+   - RemoteOK adapter handling API payloads, skipping legal header metadata.
+   - Jobicy adapter for remote tech postings with `jobGeo`.
+   - WeWorkRemotely RSS feed crawler for full-stack, frontend, and backend programming categories.
+   - Greenhouse and Lever ATS watchlist crawlers for target remote engineering companies.
+   - Manual job URL parser for pasting any job link (e.g. LinkedIn, company pages).
+
+2. **Geographic Hiring Eligibility Engine:**
+   - Implemented `evaluateGeographicEligibility` with positive flags (Worldwide, Sri Lanka, APAC) and negative constraint flags (US Only, US Work Auth Required, W2 Only, No C2C, Canada Only, EU/UK Only).
+   - Automatically quarantines US-only or regionally restricted postings when `allowSriLankaRemoteOnly` is active.
+
+3. **Normalization & Deduplication:**
+   - Stable URL hash ignoring tracking query parameters (`utm_*`, `ref`, etc.).
+   - Composite key `company::title::location` across common title variations (e.g. `sr.` vs `senior`, `swe` vs `software engineer`).
+
+4. **Job Explorer Dashboard:**
+   - Search bar across title, company, and description.
+   - Eligibility filter toggle ("Sri Lanka & Worldwide Eligible Only").
+   - Detailed job cards with eligibility reason pills, work mode, and salary indicators.
+   - "Inspect Job" modal with `<job_posting_untrusted>` warning banner.
+   - "Paste Job URL" dialog for manual job ingestion.
+   - Live discovery trigger with real-time feedback.
 
 ---
 

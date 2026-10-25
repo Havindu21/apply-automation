@@ -12,6 +12,7 @@ interface NavbarProps {
 export function Navbar({ activeTab, setActiveTab, unverifiedCount }: NavbarProps) {
   const tabs = [
     { id: "overview", label: "Overview", icon: Compass },
+    { id: "jobs", label: "Job Explorer", icon: Compass },
     {
       id: "cv-import",
       label: "CV Import Review",
@@ -36,7 +37,7 @@ export function Navbar({ activeTab, setActiveTab, unverifiedCount }: NavbarProps
             <div>
               <span className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">JobPilot</span>
               <span className="ml-2 text-xs font-medium px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800">
-                Phase 1 MVP
+                Phase 2 Active
               </span>
             </div>
           </div>

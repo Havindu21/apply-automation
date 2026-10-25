@@ -2,14 +2,25 @@
 
 ## Test Summary
 * **Test Runner:** Vitest v5.0.5
-* **Total Test Suites:** 3 passed (3 total)
-* **Total Tests:** 17 passed (17 total)
-* **Execution Time:** ~260ms
+* **Total Test Suites:** 4 passed (4 total)
+* **Total Tests:** 24 passed (24 total)
+* **Execution Time:** ~270ms
 * **Status:** ALL TESTS PASSING
 
 ---
 
 ## Detailed Test Breakdown
+
+### 1. Geographic Hiring Eligibility & Deduplication (`src/lib/discovery/__tests__/discovery.test.ts`)
+| # | Test Name | Result | Details |
+|---|---|---|---|
+| 1 | Approves explicit Worldwide & Work-From-Anywhere jobs | PASS | Verified positive detection on "Worldwide" and "Open to all countries". |
+| 2 | Approves jobs explicitly mentioning Sri Lanka or APAC | PASS | Verified APAC and Sri Lanka regional flags. |
+| 3 | Strictly rejects US-only and US Work Auth restricted roles | PASS | Caught "Must reside in US", "US Work Auth Required", and "W2 only". |
+| 4 | Rejects Europe/UK only and Canada only restricted roles | PASS | Discarded jurisdiction-locked European and Canadian listings. |
+| 5 | Prioritizes negative restrictions over generic 'remote' | PASS | Confirmed "100% remote" + "US only" resolves as ineligible. |
+| 6 | Normalizes tracking parameters and generates stable hash | PASS | Stripped `utm_source`, `ref`, and trailing slashes to produce matching hashes. |
+| 7 | Computes normalized composite dedupe keys | PASS | Normalized "Sr. Frontend Engineer" vs "Senior Frontend Engineer". |
 
 ### 1. Spec 001: Profile Schema Validation (`src/lib/validation/__tests__/profile.test.ts`)
 | # | Test Name | Result | Details |

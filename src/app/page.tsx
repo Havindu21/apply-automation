@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { FullProfile, UserPreferences } from "@/lib/validation/profile";
 import { Navbar } from "@/components/Navbar";
 import { OverviewTab } from "@/components/OverviewTab";
+import { JobExplorerTab } from "@/components/JobExplorerTab";
 import { CvImportReviewTab } from "@/components/CvImportReviewTab";
 import { ProfileTab } from "@/components/ProfileTab";
 import { CareerProfilesTab } from "@/components/CareerProfilesTab";
@@ -156,6 +157,8 @@ export default function Home() {
             isTriggering={isTriggering}
           />
         )}
+
+        {activeTab === "jobs" && <JobExplorerTab />}
 
         {activeTab === "cv-import" && (
           <CvImportReviewTab

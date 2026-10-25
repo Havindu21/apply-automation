@@ -3,6 +3,7 @@ import * as dotenv from "dotenv";
 import { db } from "../db";
 import { jobExecutionLogs } from "../db/schema";
 import { ProfileService } from "../lib/services/profile-service";
+import { discoveryOrchestrator } from "../lib/discovery/orchestrator";
 
 dotenv.config();
 
@@ -69,17 +70,24 @@ export class JobWorkerService {
       });
 
       try {
-        // Mock execution / Discovery pipeline entry (Phase 2 integration)
-        const discoveredCount = 0;
-        console.log(`[JobWorker] Discovery completed: ${discoveredCount} jobs found.`);
+        console.log(`[JobWorker] Running real discovery pipeline (source: ${jobData.source || "all"})...`);
+        const result = await discoveryOrchestrator.runDiscovery({
+          source: jobData.source,
+          limitPerSource: 20,
+        });
+
+        console.log(
+          `[JobWorker] Discovery completed: ${result.totalFetched} fetched, ${result.totalEligible} eligible, ${result.totalFilteredOut} filtered out.`
+        );
 
         await this.recordJobLog({
           id: logId,
           jobType: "discovery",
           status: "completed",
           source: jobData.source || "all",
-          itemsProcessed: discoveredCount,
-          itemsSucceeded: discoveredCount,
+          itemsProcessed: result.totalFetched,
+          itemsSucceeded: result.totalEligible,
+          itemsFailed: result.totalFilteredOut,
           completedAt: new Date(),
         });
       } catch (err: unknown) {

@@ -11,22 +11,28 @@
 - [x] Vitest unit test suite (17 passing tests).
 - [x] Zero-warning ESLint pass and clean production webpack build.
 
-## Phase 2: Real Job Discovery, Geographic Filtering & Deduplication (NEXT)
-- [ ] Modular Source Adapters:
+## Phase 2: Real Job Discovery, Geographic Filtering & Deduplication (COMPLETED)
+- [x] Modular Source Adapters:
   - Remotive API (public JSON feed).
   - RemoteOK API (public JSON feed).
   - Jobicy API.
   - WeWorkRemotely RSS category feeds.
   - Greenhouse & Lever public board crawlers for company watchlists.
   - Manual job URL parser (paste any URL including LinkedIn).
-- [ ] Geographic Eligibility Engine:
+- [x] Geographic Eligibility Engine:
   - Strict parser for allowed locations (Worldwide, Sri Lanka, APAC).
   - Rejection of US-only / EU-only jobs when candidate is in Sri Lanka.
-- [ ] Normalization & Deduplication:
+  - Negative indicator flags (W2, C2C, US Citizens only).
+- [x] Normalization & Deduplication:
   - Stable URL hash and fuzzy composite key (normalized company + title + location).
   - Persistent job storage in PostgreSQL.
+- [x] Job Explorer Web UI:
+  - Live search, filtering by eligibility and work mode.
+  - Inspect Job modal with untrusted content delimiter warning.
+  - Manual Job Ingestion modal.
+  - Live discovery trigger button.
 
-## Phase 3: Explainable Matching & Truthful CV Tailoring
+## Phase 3: Explainable Matching & Truthful CV Tailoring (NEXT)
 - [ ] Two-tier matcher:
   - Tier 1: Deterministic boolean filter (work mode, geography, excluded companies).
   - Tier 2: Gemini structured scoring (skills alignment, seniority fit, gaps, 0–100 score).
