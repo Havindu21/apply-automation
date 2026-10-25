@@ -1,69 +1,197 @@
-import Image from "next/image";
+"use client";
+
+import React, { useState, useEffect, useCallback } from "react";
+import { FullProfile, UserPreferences } from "@/lib/validation/profile";
+import { Navbar } from "@/components/Navbar";
+import { OverviewTab } from "@/components/OverviewTab";
+import { CvImportReviewTab } from "@/components/CvImportReviewTab";
+import { ProfileTab } from "@/components/ProfileTab";
+import { CareerProfilesTab } from "@/components/CareerProfilesTab";
+import { PreferencesTab } from "@/components/PreferencesTab";
+import { AutomationLogsTab } from "@/components/AutomationLogsTab";
+import { Loader2 } from "lucide-react";
 
 export default function Home() {
+  const [profile, setProfile] = useState<FullProfile | null>(null);
+  const [activeTab, setActiveTab] = useState<string>("overview");
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isTriggering, setIsTriggering] = useState<boolean>(false);
+
+  const reloadProfile = useCallback(async () => {
+    try {
+      const res = await fetch("/api/profile");
+      const data = await res.json();
+      if (data.success && data.profile) {
+        setProfile(data.profile);
+      }
+    } catch (err) {
+      console.error("Error fetching profile:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/profile")
+      .then((res) => res.json())
+      .then((data) => {
+        if (active && data.success && data.profile) {
+          setProfile(data.profile);
+        }
+      })
+      .catch((err) => console.error("Error fetching profile:", err))
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const handleVerifyFact = async (factId: string, isVerified: boolean) => {
+    try {
+      const res = await fetch("/api/profile/verify-fact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ factId, isVerified }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        await reloadProfile();
+      }
+    } catch (err) {
+      console.error("Failed to verify fact:", err);
+    }
+  };
+
+  const handleVerifyAll = async () => {
+    try {
+      const res = await fetch("/api/profile/verify-all", { method: "POST" });
+      const data = await res.json();
+      if (data.success) {
+        await reloadProfile();
+      }
+    } catch (err) {
+      console.error("Failed to verify all facts:", err);
+    }
+  };
+
+  const handleToggleProfile = async (id: string, isEnabled: boolean) => {
+    try {
+      const res = await fetch("/api/profile/career-profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, isEnabled }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        await reloadProfile();
+      }
+    } catch (err) {
+      console.error("Failed to toggle career profile:", err);
+    }
+  };
+
+  const handleUpdatePreferences = async (updates: Partial<UserPreferences>) => {
+    try {
+      const res = await fetch("/api/profile/preferences", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updates),
+      });
+      const data = await res.json();
+      if (data.success) {
+        await reloadProfile();
+      }
+    } catch (err) {
+      console.error("Failed to update preferences:", err);
+      throw err;
+    }
+  };
+
+  const handleTriggerDiscovery = async () => {
+    setIsTriggering(true);
+    try {
+      await fetch("/api/automation/trigger", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ source: "all" }),
+      });
+    } catch (err) {
+      console.error("Failed to trigger discovery:", err);
+    } finally {
+      setIsTriggering(false);
+    }
+  };
+
+  if (isLoading || !profile) {
+    return (
+      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex flex-col items-center justify-center p-6 space-y-3">
+        <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+        <p className="text-sm font-semibold text-zinc-500">Loading JobPilot Engine...</p>
+      </div>
+    );
+  }
+
+  const allFacts = [
+    ...profile.experiences.flatMap((e) => e.facts),
+    ...profile.projects.flatMap((p) => p.facts),
+  ];
+  const unverifiedCount = allFacts.filter((f) => !f.isVerified).length;
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+    <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50 flex flex-col">
+      <Navbar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        unverifiedCount={unverifiedCount}
+      />
+
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {activeTab === "overview" && (
+          <OverviewTab
+            profile={profile}
+            setActiveTab={setActiveTab}
+            onTriggerDiscovery={handleTriggerDiscovery}
+            isTriggering={isTriggering}
+          />
+        )}
+
+        {activeTab === "cv-import" && (
+          <CvImportReviewTab
+            profile={profile}
+            onVerifyFact={handleVerifyFact}
+            onVerifyAll={handleVerifyAll}
+          />
+        )}
+
+        {activeTab === "profile" && <ProfileTab profile={profile} />}
+
+        {activeTab === "career-profiles" && (
+          <CareerProfilesTab
+            profile={profile}
+            onToggleProfile={handleToggleProfile}
+          />
+        )}
+
+        {activeTab === "preferences" && (
+          <PreferencesTab
+            profile={profile}
+            onUpdatePreferences={handleUpdatePreferences}
+          />
+        )}
+
+        {activeTab === "automation" && (
+          <AutomationLogsTab
+            onTriggerDiscovery={handleTriggerDiscovery}
+            isTriggering={isTriggering}
+          />
+        )}
       </main>
+
+      <footer className="border-t border-zinc-200 dark:border-zinc-800 py-6 text-center text-xs text-zinc-500">
+        JobPilot &copy; 2026. Built with Next.js, PostgreSQL, Drizzle ORM & pg-boss. Strictly truthful AI tailoring.
+      </footer>
     </div>
   );
 }
