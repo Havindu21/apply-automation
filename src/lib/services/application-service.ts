@@ -45,6 +45,11 @@ export class ApplicationService {
     method?: "assisted_form" | "email" | "manual";
     job?: Partial<NormalizedJob>;
   }): Promise<ApplicationPackage> {
+    const dbUp = await this.isDbAvailable();
+    if (!dbUp && (process.env.NODE_ENV === "production" || process.env.STRICT_DB === "true")) {
+      throw new Error("Database unavailable: Production environment strictly prohibits silent in-memory application package storage.");
+    }
+
     const existing = await this.getApplicationByJobId(data.jobId);
     const appId = existing?.id || `app_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
     const now = new Date().toISOString();
@@ -70,11 +75,26 @@ export class ApplicationService {
       },
     ];
 
+    // Safety Gate: If CV is modified on an already approved package, invalidate prior approval
+    let targetStatus: ApplicationStatus = existing?.status || "review";
+    if (existing && (existing.status === "approved" || existing.status === "applying")) {
+      targetStatus = "review";
+      history.push({
+        id: `ev_${Date.now()}_inval`,
+        applicationId: appId,
+        fromStatus: existing.status,
+        toStatus: "review",
+        actor: "system",
+        reason: "CV package modified; prior approval invalidated for required human re-review.",
+        timestamp: now,
+      });
+    }
+
     const pkg: ApplicationPackage = {
       id: appId,
       jobId: data.jobId,
       job: data.job || existing?.job,
-      status: existing?.status || "review",
+      status: targetStatus,
       tailoredCvJson: data.tailoredCv,
       coverLetter: data.coverLetter || existing?.coverLetter,
       citedFactIds: data.citedFactIds,
@@ -85,7 +105,6 @@ export class ApplicationService {
       updatedAt: now,
     };
 
-    const dbUp = await this.isDbAvailable();
     if (dbUp) {
       try {
         await db
@@ -239,6 +258,10 @@ export class ApplicationService {
     app.history = [...(app.history || []), event];
 
     const dbUp = await this.isDbAvailable();
+    if (!dbUp && (process.env.NODE_ENV === "production" || process.env.STRICT_DB === "true")) {
+      throw new Error("Database unavailable: Production environment strictly prohibits silent in-memory state transition.");
+    }
+
     if (dbUp) {
       try {
         await db
@@ -250,7 +273,8 @@ export class ApplicationService {
           })
           .where(eq(applications.id, id));
       } catch (err) {
-        console.warn("DB transition update failed, using in-memory update:", err);
+        console.warn("DB transition update failed:", err);
+        if (process.env.NODE_ENV === "production" || process.env.STRICT_DB === "true") throw err;
       }
     }
 

@@ -393,11 +393,18 @@ export function JobExplorerTab({ onOpenInStudio }: JobExplorerTabProps) {
             </div>
 
             <div className="p-6 overflow-y-auto space-y-4 text-xs sm:text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed whitespace-pre-line font-sans">
-              <div
-                dangerouslySetInnerHTML={{
-                  __html: inspectingJob.description,
-                }}
-              />
+              <div>
+                {inspectingJob.description
+                  .replace(/<br\s*\/?>/gi, "\n")
+                  .replace(/<\/p>/gi, "\n\n")
+                  .replace(/<\/li>/gi, "\n")
+                  .replace(/<[^>]+>/g, "")
+                  .replace(/&nbsp;/g, " ")
+                  .replace(/&amp;/g, "&")
+                  .replace(/&lt;/g, "<")
+                  .replace(/&gt;/g, ">")
+                  .trim()}
+              </div>
             </div>
 
             <div className="p-4 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between">

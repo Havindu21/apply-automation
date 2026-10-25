@@ -109,6 +109,8 @@ export class CVTruthVerifier {
         // Criterion C: Numeric metric hallucination check
         if (citedFacts.length > 0) {
           this.checkNumericHallucination(bullet.text, citedFacts, errors, `${exp.company} bullet #${i + 1}`);
+          this.checkSeniorityInflation(bullet.text, citedFacts, errors, `${exp.company} bullet #${i + 1}`);
+          this.checkSubjectiveParaphrase(bullet.text, warnings, `${exp.company} bullet #${i + 1}`);
         }
       }
     }
@@ -138,6 +140,8 @@ export class CVTruthVerifier {
 
         if (citedFacts.length > 0) {
           this.checkNumericHallucination(bullet.text, citedFacts, errors, `Project ${proj.name} bullet #${i + 1}`);
+          this.checkSeniorityInflation(bullet.text, citedFacts, errors, `Project ${proj.name} bullet #${i + 1}`);
+          this.checkSubjectiveParaphrase(bullet.text, warnings, `Project ${proj.name} bullet #${i + 1}`);
         }
       }
     }
@@ -182,6 +186,53 @@ export class CVTruthVerifier {
       if (!sourceNumbers.has(num)) {
         errors.push(
           `Metric Hallucination Guard: Number/Metric '${num}' found in ${contextLabel} is absent from supporting fact evidence (${combinedSourceText}).`
+        );
+      }
+    }
+  }
+
+  private static checkSeniorityInflation(
+    bulletText: string,
+    citedFacts: AtomicFact[],
+    errors: string[],
+    contextLabel: string
+  ) {
+    const combinedSourceText = citedFacts.map((f) => f.text).join(" ").toLowerCase();
+
+    // Check leadership inflation: claiming "led the team", "team lead", "managed a team", "principal architect"
+    const leadershipPatterns = [
+      { pattern: /\b(team lead|tech lead|headed the team|managed a team|directed engineering)\b/i, label: "Team Leadership" },
+      { pattern: /\b(principal architect|chief architect|founded|director of)\b/i, label: "Executive / Architecture Ownership" },
+    ];
+
+    for (const { pattern, label } of leadershipPatterns) {
+      if (pattern.test(bulletText)) {
+        const factHasSupport = pattern.test(combinedSourceText) || /\b(lead|led|architect)\b/i.test(combinedSourceText);
+        if (!factHasSupport) {
+          errors.push(
+            `Seniority/Role Inflation Guard: Bullet claims '${label}' in ${contextLabel}, but supporting facts contain no verified leadership evidence.`
+          );
+        }
+      }
+    }
+  }
+
+  private static checkSubjectiveParaphrase(
+    bulletText: string,
+    warnings: string[],
+    contextLabel: string
+  ) {
+    // Flag subjective exaggerations or unverifiable claims for human review
+    const hyperbolicPatterns = [
+      /\b(world[- ]class|unmatched|flawlessly|wizard|guru|effortlessly)\b/i,
+      /\b(deep expertise in|mastered all aspects of)\b/i,
+    ];
+
+    for (const pattern of hyperbolicPatterns) {
+      const match = bulletText.match(pattern);
+      if (match) {
+        warnings.push(
+          `Semantic Paraphrase Flag: Subjective assertion '${match[0]}' detected in ${contextLabel}. Flagged for required human review.`
         );
       }
     }

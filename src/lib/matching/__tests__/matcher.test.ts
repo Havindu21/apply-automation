@@ -35,8 +35,10 @@ describe("JobMatcher (Two-Tier Matching Engine)", () => {
     description: "Looking for an engineer experienced in React, Next.js, and state management.",
     discoveredAt: new Date(),
     eligibility: {
+      status: "eligible",
       isEligibleForSriLanka: true,
       isWorldwideRemote: true,
+      requiresReview: false,
       detectedRegion: "Worldwide",
       reason: "Open worldwide",
       negativeFlagsFound: [],
@@ -51,8 +53,10 @@ describe("JobMatcher (Two-Tier Matching Engine)", () => {
       urlHash: "hash-us-only",
       location: "United States",
       eligibility: {
+        status: "ineligible",
         isEligibleForSriLanka: false,
         isWorldwideRemote: false,
+        requiresReview: false,
         detectedRegion: "United States",
         reason: "Explicitly restricted to United States",
         negativeFlagsFound: ["Must reside in US"],

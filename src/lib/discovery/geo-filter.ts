@@ -60,43 +60,75 @@ export function evaluateGeographicEligibility(
     explicitLoc.includes("uk only") ||
     explicitLoc.includes("canada");
 
-  // Determine eligibility
-  let isEligible = true;
+  // Determine 3-way eligibility status
+  let status: "eligible" | "ineligible" | "unknown" = "unknown";
+  let isEligible = false;
   let isWorldwide = false;
-  let reason = "Worldwide or regionally unrestricted role.";
-  let detectedRegion = "Worldwide / Open";
+  let requiresReview = false;
+  let reason = "Location eligibility undetermined; requires human review.";
+  let detectedRegion = "Unknown";
+
+  const hasExplicitSriLanka = positiveFlags.some((f) => f.includes("Sri Lanka"));
+  const hasWorldwideIndicator = positiveFlags.some((f) => f.includes("Worldwide") || f.includes("Global"));
+  const hasApacIndicator = positiveFlags.some((f) => f.includes("APAC"));
 
   if (isExplicitRestricted && !isExplicitWorldwide) {
+    status = "ineligible";
     isEligible = false;
     isWorldwide = false;
+    requiresReview = false;
     detectedRegion = locationString || candidateRequiredLocation || "Restricted Jurisdiction";
     reason = `Explicitly restricted to ${detectedRegion}. Candidate in Sri Lanka is ineligible.`;
-  } else if (negativeFlags.length > 0 && positiveFlags.length === 0) {
+  } else if (negativeFlags.length > 0 && !hasExplicitSriLanka) {
+    status = "ineligible";
     isEligible = false;
     isWorldwide = false;
+    requiresReview = false;
     detectedRegion = negativeFlags.join(", ");
-    reason = `Negative location constraints detected (${negativeFlags.join(", ")}).`;
-  } else if (positiveFlags.length > 0) {
+    reason = `Negative location constraints detected (${negativeFlags.join(", ")}). Candidate is ineligible.`;
+  } else if (hasExplicitSriLanka) {
+    status = "eligible";
     isEligible = true;
-    isWorldwide = positiveFlags.some((f) => f.includes("Worldwide") || f.includes("Global"));
-    detectedRegion = positiveFlags.join(", ");
-    reason = `Confirmed eligible for Sri Lanka applicants (${detectedRegion}).`;
-  } else if (locationString.trim().toLowerCase() === "remote") {
-    // Unspecified remote - conditionally eligible but flagged
+    isWorldwide = isExplicitWorldwide;
+    requiresReview = false;
+    detectedRegion = "Sri Lanka";
+    reason = "Explicitly eligible: Role directly accepts applicants based in Sri Lanka.";
+  } else if (hasWorldwideIndicator && negativeFlags.length === 0) {
+    status = "eligible";
     isEligible = true;
     isWorldwide = true;
-    detectedRegion = "Remote (Unspecified)";
-    reason = "Posting specified 'Remote' without explicit country restrictions.";
-  } else {
-    // Unknown location
+    requiresReview = false;
+    detectedRegion = "Worldwide Remote";
+    reason = "Confirmed eligible: Verified worldwide or work-from-anywhere remote role.";
+  } else if (hasApacIndicator) {
+    // APAC without explicit Sri Lanka confirmation requires review
+    status = "unknown";
     isEligible = false;
-    detectedRegion = locationString || "Unknown";
-    reason = `Location is specified as '${locationString || "Unknown"}' and is not clearly open to Sri Lanka applicants.`;
+    isWorldwide = false;
+    requiresReview = true;
+    detectedRegion = "APAC / Regional";
+    reason = "Requires review: Role is designated APAC, but does not explicitly confirm Sri Lanka legal/payroll eligibility.";
+  } else if (locationString.trim().toLowerCase() === "remote") {
+    // Generic remote without country specification requires review
+    status = "unknown";
+    isEligible = false;
+    isWorldwide = false;
+    requiresReview = true;
+    detectedRegion = "Remote (Unspecified)";
+    reason = "Requires review: Posting specified generic 'Remote' without explicit worldwide or country-level eligibility.";
+  } else {
+    status = "ineligible";
+    isEligible = false;
+    requiresReview = false;
+    detectedRegion = locationString || "Unknown Region";
+    reason = `Location is specified as '${locationString || "Unknown"}' and is not open to Sri Lanka applicants.`;
   }
 
   return {
+    status,
     isEligibleForSriLanka: isEligible,
     isWorldwideRemote: isWorldwide,
+    requiresReview,
     detectedRegion,
     reason,
     negativeFlagsFound: negativeFlags,

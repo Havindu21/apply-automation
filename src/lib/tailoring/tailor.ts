@@ -63,6 +63,9 @@ export class CVTailorService {
       console.warn("[CVTailorService] Gemini output failed verification rules, falling back to safe canonical CV:", verification.errors);
       tailoredCV = this.generateDeterministicFallbackCV(profile, selectedCareerProfile);
       verification = CVTruthVerifier.verify(tailoredCV, profile);
+      if (!verification.isValid) {
+        throw new Error(`Fallback CV generation failed verification rules: ${verification.errors.join("; ")}`);
+      }
     }
 
     // 4. Generate grounded cover letter

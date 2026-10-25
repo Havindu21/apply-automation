@@ -101,4 +101,24 @@ describe("CVTruthVerifier (Deterministic Zero-Hallucination Guard)", () => {
     expect(result.isValid).toBe(false);
     expect(result.errors.some((e) => e.includes("Hallucinated Skill Detected: 'Kubernetes'"))).toBe(true);
   });
+
+  it("fails verification if bullet inflates seniority from contributor to team lead/architect without fact evidence", () => {
+    const inflatedCV = structuredClone(validCV);
+    inflatedCV.experiences[0].bullets[0].text =
+      "Served as Team Lead and headed the team to eliminate API race conditions.";
+
+    const result = CVTruthVerifier.verify(inflatedCV, verifiedProfile);
+    expect(result.isValid).toBe(false);
+    expect(result.errors.some((e) => e.includes("Seniority/Role Inflation Guard"))).toBe(true);
+  });
+
+  it("flags subjective exaggerations or hyperbolic paraphrases for human review", () => {
+    const subjectiveCV = structuredClone(validCV);
+    subjectiveCV.experiences[0].bullets[0].text =
+      "Flawlessly eliminated filter-based API request race conditions with world-class engineering.";
+
+    const result = CVTruthVerifier.verify(subjectiveCV, verifiedProfile);
+    expect(result.warnings.length).toBeGreaterThan(0);
+    expect(result.warnings.some((w) => w.includes("Semantic Paraphrase Flag"))).toBe(true);
+  });
 });

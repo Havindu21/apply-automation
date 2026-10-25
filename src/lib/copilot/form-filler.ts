@@ -1,5 +1,6 @@
 import { FullProfile } from "../validation/profile";
 import { TailoredCVSchema } from "../tailoring/verifier";
+import { validateSafeJobUrl } from "../validation/url";
 import { chromium, BrowserContext, Page } from "playwright";
 import * as fs from "fs";
 import * as path from "path";
@@ -80,8 +81,22 @@ export class FormCopilot {
     pdfBuffer?: Buffer,
     headed: boolean = true
   ): Promise<AssistedSessionResult> {
+    const urlCheck = validateSafeJobUrl(url);
+    if (!urlCheck.isValid || !urlCheck.cleanUrl) {
+      return {
+        sessionId: `err_${Date.now()}`,
+        platform: "generic",
+        url,
+        filledFields: [],
+        unfilledFields: [],
+        status: "error",
+        message: urlCheck.error || "Disallowed or invalid application URL",
+      };
+    }
+    const safeUrl = urlCheck.cleanUrl;
+
     const payload = this.prepareFormPayload(profile, tailoredCv);
-    const platform = this.detectAtsPlatform(url);
+    const platform = this.detectAtsPlatform(safeUrl);
     const sessionId = `assist_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
     const filledFields: string[] = [];
     const unfilledFields: string[] = [];

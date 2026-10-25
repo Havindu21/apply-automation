@@ -8,23 +8,45 @@ describe("Geographic Hiring Eligibility Filter", () => {
       "Worldwide",
       "We are a fully distributed team. You can work from anywhere in the world."
     );
+    expect(result1.status).toBe("eligible");
     expect(result1.isEligibleForSriLanka).toBe(true);
     expect(result1.isWorldwideRemote).toBe(true);
+    expect(result1.requiresReview).toBe(false);
 
     const result2 = evaluateGeographicEligibility(
       "Remote (Worldwide)",
       "Join our engineering team. Open to all countries."
     );
+    expect(result2.status).toBe("eligible");
     expect(result2.isEligibleForSriLanka).toBe(true);
   });
 
-  it("approves jobs explicitly mentioning Sri Lanka or APAC", () => {
+  it("approves jobs explicitly mentioning Sri Lanka", () => {
     const result = evaluateGeographicEligibility(
       "APAC",
       "We are hiring engineers across Asia-Pacific including Sri Lanka and India."
     );
+    expect(result.status).toBe("eligible");
     expect(result.isEligibleForSriLanka).toBe(true);
-    expect(result.positiveFlagsFound).toContain("APAC / South Asia");
+    expect(result.positiveFlagsFound).toContain("Explicit Sri Lanka");
+  });
+
+  it("marks generic APAC or unspecified Remote as unknown requiring human review", () => {
+    const apacOnly = evaluateGeographicEligibility(
+      "APAC",
+      "We are hiring engineers across the APAC region."
+    );
+    expect(apacOnly.status).toBe("unknown");
+    expect(apacOnly.isEligibleForSriLanka).toBe(false);
+    expect(apacOnly.requiresReview).toBe(true);
+
+    const genericRemote = evaluateGeographicEligibility(
+      "Remote",
+      "We are looking for a software developer to join our team."
+    );
+    expect(genericRemote.status).toBe("unknown");
+    expect(genericRemote.isEligibleForSriLanka).toBe(false);
+    expect(genericRemote.requiresReview).toBe(true);
   });
 
   it("strictly rejects US-only and US Work Authorization restricted remote jobs", () => {

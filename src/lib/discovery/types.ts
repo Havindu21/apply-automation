@@ -16,9 +16,13 @@ export interface RawDiscoveredJob {
   rawPayload?: Record<string, unknown>;
 }
 
+export type GeographicEligibilityStatus = "eligible" | "ineligible" | "unknown";
+
 export interface GeographicEligibilityResult {
+  status: GeographicEligibilityStatus;
   isEligibleForSriLanka: boolean;
   isWorldwideRemote: boolean;
+  requiresReview: boolean;
   detectedRegion: string;
   reason: string;
   negativeFlagsFound: string[];

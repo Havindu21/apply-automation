@@ -29,6 +29,9 @@ export class ProfileService {
   static async getProfile(): Promise<FullProfile> {
     const dbUp = await this.isDbAvailable();
     if (!dbUp) {
+      if (process.env.NODE_ENV === "production" || process.env.STRICT_DB === "true") {
+        throw new Error("Database unavailable: Production environment strictly prohibits silent in-memory fallback.");
+      }
       return inMemoryProfile;
     }
 
@@ -142,6 +145,11 @@ export class ProfileService {
   }
 
   static async verifyFact(factId: string, isVerified: boolean): Promise<boolean> {
+    const dbUp = await this.isDbAvailable();
+    if (!dbUp && (process.env.NODE_ENV === "production" || process.env.STRICT_DB === "true")) {
+      throw new Error("Database unavailable: Production environment strictly prohibits silent in-memory updates.");
+    }
+
     // Update in memory
     for (const exp of inMemoryProfile.experiences) {
       const target = exp.facts.find((f) => f.id === factId);
@@ -159,7 +167,7 @@ export class ProfileService {
     }
 
     // Update in database if connected
-    if (await this.isDbAvailable()) {
+    if (dbUp) {
       try {
         await db.update(facts).set({
           isVerified,
@@ -167,6 +175,7 @@ export class ProfileService {
         }).where(eq(facts.id, factId));
       } catch (err) {
         console.error("Failed to update fact in DB:", err);
+        if (process.env.NODE_ENV === "production" || process.env.STRICT_DB === "true") throw err;
       }
     }
 
@@ -174,6 +183,11 @@ export class ProfileService {
   }
 
   static async verifyAllFacts(): Promise<number> {
+    const dbUp = await this.isDbAvailable();
+    if (!dbUp && (process.env.NODE_ENV === "production" || process.env.STRICT_DB === "true")) {
+      throw new Error("Database unavailable: Production environment strictly prohibits silent in-memory updates.");
+    }
+
     let count = 0;
     for (const exp of inMemoryProfile.experiences) {
       for (const fact of exp.facts) {
@@ -188,7 +202,7 @@ export class ProfileService {
       }
     }
 
-    if (await this.isDbAvailable()) {
+    if (dbUp) {
       try {
         await db.update(facts).set({
           isVerified: true,
@@ -196,6 +210,7 @@ export class ProfileService {
         });
       } catch (err) {
         console.error("Failed to verify all facts in DB:", err);
+        if (process.env.NODE_ENV === "production" || process.env.STRICT_DB === "true") throw err;
       }
     }
 
