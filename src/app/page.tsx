@@ -5,6 +5,7 @@ import { FullProfile, UserPreferences } from "@/lib/validation/profile";
 import { Navbar } from "@/components/Navbar";
 import { OverviewTab } from "@/components/OverviewTab";
 import { JobExplorerTab } from "@/components/JobExplorerTab";
+import { ApplicationStudioTab } from "@/components/ApplicationStudioTab";
 import { CvImportReviewTab } from "@/components/CvImportReviewTab";
 import { ProfileTab } from "@/components/ProfileTab";
 import { CareerProfilesTab } from "@/components/CareerProfilesTab";
@@ -15,6 +16,7 @@ import { Loader2 } from "lucide-react";
 export default function Home() {
   const [profile, setProfile] = useState<FullProfile | null>(null);
   const [activeTab, setActiveTab] = useState<string>("overview");
+  const [selectedStudioJobId, setSelectedStudioJobId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isTriggering, setIsTriggering] = useState<boolean>(false);
 
@@ -158,7 +160,21 @@ export default function Home() {
           />
         )}
 
-        {activeTab === "jobs" && <JobExplorerTab />}
+        {activeTab === "jobs" && (
+          <JobExplorerTab
+            onOpenInStudio={(jobId) => {
+              setSelectedStudioJobId(jobId);
+              setActiveTab("studio");
+            }}
+          />
+        )}
+
+        {activeTab === "studio" && (
+          <ApplicationStudioTab
+            profile={profile}
+            initialJobId={selectedStudioJobId}
+          />
+        )}
 
         {activeTab === "cv-import" && (
           <CvImportReviewTab

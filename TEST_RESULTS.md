@@ -2,16 +2,40 @@
 
 ## Test Summary
 * **Test Runner:** Vitest v5.0.5
-* **Total Test Suites:** 4 passed (4 total)
-* **Total Tests:** 24 passed (24 total)
-* **Execution Time:** ~270ms
+* **Total Test Suites:** 6 passed (6 total)
+* **Total Tests:** 36 passed (36 total)
+* **Execution Time:** ~310ms
 * **Status:** ALL TESTS PASSING
 
 ---
 
 ## Detailed Test Breakdown
 
-### 1. Geographic Hiring Eligibility & Deduplication (`src/lib/discovery/__tests__/discovery.test.ts`)
+### 1. CV Truth Verifier & Hallucination Guard (`src/lib/tailoring/__tests__/verifier.test.ts`)
+| # | Test Name | Result | Details |
+|---|---|---|---|
+| 1 | Passes when all claims cite verified fact IDs | PASS | Validated 100% verified fact tracing. |
+| 2 | Fails verification if a bullet has zero cited fact IDs | PASS | Blocked ungrounded statement. |
+| 3 | Fails verification if a bullet cites an UNVERIFIED fact | PASS | Blocked citation of imported but unreviewed fact. |
+| 4 | Fails verification if fact ID does not exist | PASS | Caught non-existent ID. |
+| 5 | Fails verification if LLM introduces hallucinated metric | PASS | Blocked invented numbers (e.g. "50% speed increase", "10,000 users"). |
+| 6 | Fails verification if undeclared skill is inserted | PASS | Blocked hallucinated skills (e.g. "Kubernetes"). |
+
+---
+
+### 2. Two-Tier Job Matcher (`src/lib/matching/__tests__/matcher.test.ts`)
+| # | Test Name | Result | Details |
+|---|---|---|---|
+| 1 | Tier 1: Rejects jobs failing geographic eligibility | PASS | Blocked US-only job immediately without LLM tokens. |
+| 2 | Tier 1: Rejects jobs with incompatible work mode (onsite) | PASS | Blocked onsite role when remote-only mode active. |
+| 3 | Tier 1: Rejects jobs from excluded companies | PASS | Filtered out excluded employer. |
+| 4 | Tier 2: Assigns Frontend profile for React role | PASS | Selected `cp-frontend` and verified alignment. |
+| 5 | Tier 2: Assigns Flutter profile for Mobile role | PASS | Selected `cp-flutter` based on StoreKit & in-app purchases. |
+| 6 | Tier 2: Assigns Backend profile for Spring Boot role | PASS | Selected `cp-backend` based on Spring AOP & database facts. |
+
+---
+
+### 3. Geographic Hiring Eligibility & Deduplication (`src/lib/discovery/__tests__/discovery.test.ts`)
 | # | Test Name | Result | Details |
 |---|---|---|---|
 | 1 | Approves explicit Worldwide & Work-From-Anywhere jobs | PASS | Verified positive detection on "Worldwide" and "Open to all countries". |

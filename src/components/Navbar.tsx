@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Compass, ShieldCheck, UserCheck, Briefcase, Sliders, Activity } from "lucide-react";
+import { Compass, ShieldCheck, UserCheck, Briefcase, Sliders, Activity, Sparkles } from "lucide-react";
 
 interface NavbarProps {
   activeTab: string;
@@ -13,6 +13,7 @@ export function Navbar({ activeTab, setActiveTab, unverifiedCount }: NavbarProps
   const tabs = [
     { id: "overview", label: "Overview", icon: Compass },
     { id: "jobs", label: "Job Explorer", icon: Compass },
+    { id: "studio", label: "Application Studio", icon: Sparkles },
     {
       id: "cv-import",
       label: "CV Import Review",

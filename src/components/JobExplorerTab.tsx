@@ -16,7 +16,11 @@ import {
   DollarSign,
 } from "lucide-react";
 
-export function JobExplorerTab() {
+interface JobExplorerTabProps {
+  onOpenInStudio?: (jobId: string) => void;
+}
+
+export function JobExplorerTab({ onOpenInStudio }: JobExplorerTabProps) {
   const [jobs, setJobs] = useState<NormalizedJob[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isDiscovering, setIsDiscovering] = useState<boolean>(false);
@@ -331,6 +335,14 @@ export function JobExplorerTab() {
                 </span>
 
                 <div className="flex items-center gap-2">
+                  {onOpenInStudio && job.eligibility.isEligibleForSriLanka && (
+                    <button
+                      onClick={() => onOpenInStudio(job.urlHash)}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:hover:bg-indigo-900 dark:text-indigo-300 transition-colors"
+                    >
+                      Match in Studio →
+                    </button>
+                  )}
                   <button
                     onClick={() => setInspectingJob(job)}
                     className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-zinc-100 hover:bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-300 transition-colors"

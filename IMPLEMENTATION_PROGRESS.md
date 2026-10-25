@@ -2,9 +2,37 @@
 
 ## Status Summary
 
-* **Current Phase:** Phase 2 (Real Job Discovery, Filtering & Deduplication) — **COMPLETED**
-* **Next Phase:** Phase 3 (Explainable Matching & Truthful CV Tailoring)
-* **Overall Health:** 24/24 unit tests passing, production build passing, 0 ESLint errors/warnings.
+* **Current Phase:** Phase 3 (Explainable Matching & Truthful CV Tailoring) — **COMPLETED**
+* **Next Phase:** Phase 4 (Application Review Queue & ATS PDF Generation)
+* **Overall Health:** 36/36 unit tests passing, production build passing, 0 ESLint errors/warnings.
+
+---
+
+## Completed Milestones in Phase 3
+
+1. **Gemini LLM Integration Gateway:**
+   - Provider abstraction in `src/lib/ai/gemini-client.ts` with structured JSON schema responses.
+   - Pinned `gemini-flash-latest` and `gemini-pro-latest` models with resilient offline/fallback handlers.
+   - Untrusted job input sanitization using `<job_posting_untrusted>` tags to neutralize prompt injections.
+
+2. **Two-Tier Explainable Matcher:**
+   - Tier 1 hard deterministic filter for work mode, geographic eligibility, and company exclusions before spending any LLM tokens.
+   - Tier 2 AI structured scoring producing a 0–100 match score, strengths breakdown, transparent gap analysis, and seniority fit.
+   - Auto-targets the optimal career profile (Frontend, Full-Stack, Backend, Flutter, AI).
+
+3. **Truthful CV Tailoring Engine & Zero-Hallucination Verifier:**
+   - Strict data boundary: Tailoring prompt receives *only* verified facts (`isVerified: true`).
+   - Every generated bullet point must cite its supporting atomic `fact_id`.
+   - Deterministic verifier checks:
+     - Fact existence & user-verified status.
+     - Numeric & metric containment (blocks invented percentages or stats).
+     - Skill containment (blocks undeclared technologies).
+   - Generates grounded, customized cover letters without exaggerations.
+
+4. **Application Studio UI:**
+   - Visual explainable match meter (0–100) with strengths and honest gaps.
+   - Side-by-side comparison between Base Canonical Facts and Tailored CV bullets with clickable citation badges.
+   - Integrated "Match in Studio" navigation directly from Job Explorer cards.
 
 ---
 

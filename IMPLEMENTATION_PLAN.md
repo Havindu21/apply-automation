@@ -32,7 +32,27 @@
   - Manual Job Ingestion modal.
   - Live discovery trigger button.
 
-## Phase 3: Explainable Matching & Truthful CV Tailoring (NEXT)
+## Phase 3: Explainable Matching & Truthful CV Tailoring (COMPLETED)
+- [x] Gemini AI Gateway:
+  - Model tiering defaulting to `gemini-flash-latest` with fallback to `gemini-pro-latest`.
+  - Structured JSON outputs strictly parsed.
+  - Untrusted job description text enclosed in `<job_posting_untrusted>` tags.
+- [x] Two-Tier Explainable Matcher:
+  - Tier 1: Deterministic filter (work mode, geography, excluded companies).
+  - Tier 2: AI structured scoring (skills alignment, seniority fit, gaps, 0–100 score).
+  - Automatic career profile selection matching role requirements.
+- [x] Truthful CV Generator & Deterministic Verifier:
+  - Ground truth isolation: ONLY verified profile facts (`isVerified: true`) can be cited.
+  - Zero-hallucination verifier: rejects unverified citations, non-existent facts, missing citations, metric hallucinations (numbers/percentages), and undeclared skills.
+  - Transparent gap analysis: unsupported requirements surfaced honestly.
+  - Grounded cover letter generator.
+- [x] Application Studio Web UI:
+  - Job selection, match analysis execution, visual score meter.
+  - Side-by-side comparison: Base CV Ground Truth vs. Tailored Presentation.
+  - Cited fact ID verification pills (`✓ cites fact-id`).
+  - Cover letter viewer and gap breakdown.
+
+## Phase 4: Application Studio Document Export & Review Queue (NEXT)
 - [ ] Two-tier matcher:
   - Tier 1: Deterministic boolean filter (work mode, geography, excluded companies).
   - Tier 2: Gemini structured scoring (skills alignment, seniority fit, gaps, 0–100 score).
