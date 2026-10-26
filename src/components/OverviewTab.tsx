@@ -124,7 +124,7 @@ export function OverviewTab({
             </span>
           </div>
           <div className="mt-2 text-xs text-zinc-500 font-mono">
-            {profile.preferences.automationCron}
+            {profile.preferences.automationEnabled ? profile.preferences.automationCron : "Scheduled runs disabled"}
           </div>
         </div>
       </div>

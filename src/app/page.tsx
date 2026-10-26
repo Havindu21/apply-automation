@@ -145,14 +145,15 @@ export default function Home() {
   const unverifiedCount = allFacts.filter((f) => !f.isVerified).length;
 
   return (
-    <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50 flex flex-col">
+    <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50 flex">
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         unverifiedCount={unverifiedCount}
       />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="flex-1 min-w-0 flex flex-col">
+      <main className="flex-1 w-full max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {activeTab === "overview" && (
           <OverviewTab
             profile={profile}
@@ -227,6 +228,7 @@ export default function Home() {
       <footer className="border-t border-zinc-200 dark:border-zinc-800 py-6 text-center text-xs text-zinc-500">
         JobPilot &copy; 2026. Built with Next.js, PostgreSQL, Drizzle ORM & pg-boss. Strictly truthful AI tailoring.
       </footer>
+      </div>
     </div>
   );
 }
